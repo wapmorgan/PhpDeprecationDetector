@@ -1,0 +1,10 @@
+{
+    "require": {
+        "docopt/docopt": "1.0.0-rc1"
+    },
+    "autoload": {
+        "psr-4": {
+            "wapmorgan\\PhpCodeFixer\\": "src/"
+        }
+    }
+}

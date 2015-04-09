@@ -1,0 +1,46 @@
+#!/usr/bin/php
+<?php
+require dirname(dirname((__FILE__))).'/vendor/autoload.php';
+
+use wapmorgan\PhpCodeFixer\IssuesBank;
+use wapmorgan\PhpCodeFixer\PhpCodeFixer;
+
+
+$doc = <<<DOC
+Usage: phpcf [--target VERSION]  [FILES ...]
+
+Options:
+  --target VERSION  target php version [default: 5.6]
+
+DOC;
+
+$args = Docopt::handle($doc);
+
+$available_versions = array('5.3', '5.4', '5.5', '5.6');
+
+if (!in_array($args['--target'], $available_versions, true)) {
+    fwrite(STDERR, 'Target version is not valid.');
+    exit();
+}
+
+
+// init issues bank
+$issues = new IssuesBank();
+foreach ($available_versions as $version) {
+    $version_issues = include dirname(dirname(__FILE__)).'/data/'.$version.'.php';
+
+    foreach ($version_issues as $issues_type => $issues_list) {
+        $issues->import($version, $issues_type, $issues_list);
+    }
+
+    if ($version == $args['--target'])
+        break;
+}
+
+foreach ($args['FILES'] as $file) {
+    if (is_dir($file)) {
+        PhpCodeFixer::checkDir($file, $issues);
+    } else {
+        PhpCodeFixer::checkFile($file, $issues);
+    }
+}

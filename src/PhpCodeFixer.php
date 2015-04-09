@@ -1,0 +1,172 @@
+<?php
+namespace wapmorgan\PhpCodeFixer;
+
+function in_array_column($needle, $haystack, $column, $strict = false) {
+    if ($strict) {
+        foreach ($needle as $k => $elem) {
+            if ($elem[$column] === $haystack)
+                return true;
+        }
+        return false;
+    } else {
+        foreach ($needle as $k => $elem) {
+            if ($elem[$column] == $haystack)
+                return true;
+        }
+        return false;
+    }
+}
+
+function array_search_column($needle, $haystack, $column, $strict = false) {
+    if ($strict) {
+        foreach ($needle as $k => $elem) {
+            if ($elem[$column] === $haystack)
+                return $k;
+        }
+        return false;
+    } else {
+        foreach ($needle as $k => $elem) {
+            if ($elem[$column] == $haystack)
+                return $k;
+        }
+        return false;
+    }
+}
+
+function array_filter_by_column($source, $needle, $column) {
+    $filtered = array();
+    foreach ($source as $elem) {
+        if ($elem[$column] == $needle)
+            $filtered[] = $elem;
+    }
+    return $filtered;
+}
+
+class PhpCodeFixer {
+    static public function checkDir($dir, IssuesBank $issues) {
+        echo 'Scanning '.$dir.' ...'.PHP_EOL;
+        self::checkDirInternal($dir, $issues);
+    }
+
+    static protected function checkDirInternal($dir, IssuesBank $issues) {
+        foreach (glob($dir.'/*') as $file) {
+            if (is_dir($file))
+                self::checkDirInternal($file, $issues);
+            else {
+                self::checkFile($file, $issues);
+            }
+        }
+    }
+
+    static public function checkFile($file, IssuesBank $issues) {
+        $source = file_get_contents($file);
+        $tokens = token_get_all($source);
+
+        // cut off heredoc, comments
+        while (in_array_column($tokens, T_START_HEREDOC, 0)) {
+            $start = array_search_column($tokens, T_START_HEREDOC, 0);
+            $end = array_search_column($tokens, T_END_HEREDOC, 0);
+            array_splice($tokens, $start, ($end - $start));
+        }
+
+        // find for deprecated functions
+        $deprecated_functions = $issues->getAll('functions');
+        $used_functions = array_filter_by_column($tokens, T_STRING, 0);
+        foreach ($used_functions as $used_function) {
+            if (isset($deprecated_functions[$used_function[1]])) {
+                $function = $deprecated_functions[$used_function[1]];
+                fwrite(STDERR, '['.$function[1].'] Function '.$used_function[1].' is deprecated in file '.$file.'['.$used_function[2].']. ');
+                if ($function[0] != $used_function[1])
+                    fwrite(STDERR, 'Consider using '.$function[0].' instead.');
+                fwrite(STDERR, PHP_EOL);
+            }
+        }
+
+        // find for deprecated ini settings
+        $deprecated_ini_settings = $issues->getAll('ini_settings');
+        foreach ($tokens as $i => $token) {
+            if ($token[0] == T_STRING && in_array($token[1], array('ini_alter', 'ini_set', 'ini_​get', 'ini_restore'))) {
+                $ini_setting = $tokens[$i+2]; // ('ini_setting'
+                if ($ini_setting[0] == T_CONSTANT_ENCAPSED_STRING) $ini_setting[1] = trim($ini_setting[1], '\'"');
+                if (isset($deprecated_ini_settings[$ini_setting[1]])) {
+                    $deprecated_setting = $deprecated_ini_settings[$ini_setting[1]];
+                    fwrite(STDERR, '['.$deprecated_setting[1].'] Ini setting '.$ini_setting[1].' is deprecated in file '.$file.'['.$ini_setting[2].']. ');
+                    if ($deprecated_setting[0] != $ini_setting[1])
+                        fwrite(STDERR, 'Consider using '.$deprecated_setting[0].' instead.');
+                    fwrite(STDERR, PHP_EOL);
+                }
+            }
+        }
+
+        // find for deprecated functions usage
+        $deprecated_functions_usage = $issues->getAll('functions_usage');
+        foreach ($tokens as $i => $token) {
+            if ($token[0] != T_STRING)
+                continue;
+            if (!isset($deprecated_functions_usage[$token[1]]))
+                continue;
+            // get func arguments
+            $function = array($token);
+            $k = $i+2;
+            $braces = 1;
+            while ($braces > 0 && isset($tokens[$k])) {
+                $function[] = $tokens[$k];
+                if ($tokens[$k] == ')') {/*var_dump($tokens[$k]);*/ $braces--;}
+                else if ($tokens[$k] == '(') {/*var_dump($tokens[$k]);*/ $braces++; }
+                // var_dump($braces);
+                $k++;
+            }
+            //$function[] = $tokens[$k];
+            $fixer = ltrim($deprecated_functions_usage[$token[1]][0], '@');
+            require_once dirname(dirname(__FILE__)).'/data/'.$fixer.'.php';
+            $fixer = __NAMESPACE__.'\\'.$fixer;
+            $result = $fixer($function);
+            if ($result)
+                fwrite(STDERR, '['.$deprecated_functions_usage[$token[1]][1].'] Function '.$token[1].' usage is deprecated ('.$deprecated_functions_usage[$token[1]][0].') in file '.$file.'['.$token[2].'].'.PHP_EOL);
+        }
+
+        // find for deprecated variables
+        $deprecated_varibales = $issues->getAll('variables');
+        $used_variables = array_filter_by_column($tokens, T_VARIABLE, 0);
+        foreach ($used_variables as $used_variable) {
+            if (isset($deprecated_varibales[$used_variable[1]])) {
+                $variable = $deprecated_varibales[$used_variable[1]];
+                fwrite(STDERR, '['.$variable[1].'] Variable '.$used_variable[1].' is deprecated in file '.$file.'['.$used_variable[2].']. ');
+            }
+        }
+    }
+
+    static public function makeFunctionCallTree(array $tokens) {
+        $tree = array();
+        $braces = 0;
+        $i = 1;
+        while (/*$braces > 0 &&*/ isset($tokens[$i])) {
+            if ($tokens[$i] == '(') $braces++;
+            else if ($tokens[$i] == ')') $braces--;
+            else $tree[$braces][] = $tokens[$i];
+            $i++;
+        }
+        return $tree;
+    }
+
+    static public function delimByComma(array $tokens) {
+        $delimited = array();
+        $comma = 0;
+        foreach ($tokens as $token) {
+            if ($token == ',') $comma++;
+            else $delimited[$comma][] = $token;
+        }
+        return $delimited;
+    }
+
+    static public function trimSpaces(array $tokens) {
+        $trimmed = array();
+        foreach ($tokens as $token) {
+            if (is_array($token) && $token[0] == T_WHITESPACE)
+                continue;
+            else
+                $trimmed[] = $token;
+        }
+        return $trimmed;
+    }
+}
