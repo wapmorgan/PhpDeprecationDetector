@@ -1,6 +1,7 @@
 #!/usr/bin/php
 <?php
-$vendor_dir = is_dir(dirname(dirname((__FILE__))).'/vendor') ? dirname(dirname((__FILE__))).'/vendor' : dirname(dirname(__FILE__));
+// ? create-project installation : require installation
+$vendor_dir = is_dir(dirname(dirname((__FILE__))).'/vendor') ? dirname(dirname((__FILE__))).'/vendor' : dirname(dirname(dirname(dirname(__FILE__))));
 require $vendor_dir.'/autoload.php';
 
 use wapmorgan\PhpCodeFixer\IssuesBank;
