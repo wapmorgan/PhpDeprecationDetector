@@ -1,6 +1,7 @@
 #!/usr/bin/php
 <?php
-require dirname(dirname((__FILE__))).'/vendor/autoload.php';
+$vendor_dir = is_dir(dirname(dirname((__FILE__))).'/vendor') ? dirname(dirname((__FILE__))).'/vendor' : dirname(dirname(__FILE__));
+require $vendor_dir.'/autoload.php';
 
 use wapmorgan\PhpCodeFixer\IssuesBank;
 use wapmorgan\PhpCodeFixer\PhpCodeFixer;

@@ -9,5 +9,6 @@
         "psr-4": {
             "wapmorgan\\PhpCodeFixer\\": "src/"
         }
-    }
+    },
+    "bin": ["bin/phpcf"]
 }
