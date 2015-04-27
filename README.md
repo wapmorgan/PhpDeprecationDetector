@@ -24,5 +24,32 @@ By providing additional parameter `--target` you can specify version of PHP to p
 | --target 5.4 | Use all deprecations from 5.3 to 5.4. |
 | --target 5.3 | Use deprecations from 5.3 only.       |
 
+# Installation
+## Composer
+The recommended way to install phpcf is via composer.
+
+1. If you do not have composer installed, download the [`composer.phar`](https://getcomposer.org/composer.phar) executable or use the installer.
+  ``` sh
+  $ curl -sS https://getcomposer.org/installer | php
+  ```
+
+2. Set `minimum-stability` option in composer.json to "dev".
+  ``` json
+  {
+    "minimum-stability": "dev"
+  }
+  ```
+  
+3. Run `php composer.phar require wapmorgan/php-code-fixer dev-master` or add requirement in composer.json.
+  ``` json
+  {
+    "require": {
+      "wapmorgan/php-code-fixer": "dev-master"
+    }
+  }
+  ```
+  
+4. Run `php composer.phar update`
+
 # Composer configuration
 To install phpcf and its dependencies `minimum-stability` in your composer.json should be set to `dev`.
