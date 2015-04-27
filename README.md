@@ -23,3 +23,6 @@ By providing additional parameter `--target` you can specify version of PHP to p
 | --target 5.5 | Use all deprecations from 5.3 to 5.5. |
 | --target 5.4 | Use all deprecations from 5.3 to 5.4. |
 | --target 5.3 | Use deprecations from 5.3 only.       |
+
+# Composer configuration
+To install phpcf and its dependencies `minimum-stability` in your composer.json should be set to `dev`.
