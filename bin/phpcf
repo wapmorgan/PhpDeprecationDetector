@@ -18,7 +18,7 @@ DOC;
 
 $args = Docopt::handle($doc);
 
-$available_versions = array('5.3', '5.4', '5.5', '5.6');
+$available_versions = array('5.3', '5.4', '5.5', '5.6', '7.0-experimental');
 
 if (!in_array($args['--target'], $available_versions, true)) {
     fwrite(STDERR, 'Target version is not valid.');
@@ -29,7 +29,7 @@ if (!in_array($args['--target'], $available_versions, true)) {
 // init issues bank
 $issues = new IssuesBank();
 foreach ($available_versions as $version) {
-    $version_issues = include dirname(dirname(__FILE__)).'/data/'.$version.'.php';
+    $version_issues = include dirname(dirname(__FILE__)).'/data/'.(strpos($version, '-') !== false ? strstr($version, '-', true) : $version).'.php';
 
     foreach ($version_issues as $issues_type => $issues_list) {
         $issues->import($version, $issues_type, $issues_list);

@@ -1,32 +1,32 @@
 <?php
 namespace wapmorgan\PhpCodeFixer;
 
-function in_array_column($needle, $haystack, $column, $strict = false) {
+function in_array_column($haystack, $needle, $column, $strict = false) {
     if ($strict) {
-        foreach ($needle as $k => $elem) {
-            if ($elem[$column] === $haystack)
+        foreach ($haystack as $k => $elem) {
+            if ($elem[$column] === $needle)
                 return true;
         }
         return false;
     } else {
-        foreach ($needle as $k => $elem) {
-            if ($elem[$column] == $haystack)
+        foreach ($haystack as $k => $elem) {
+            if ($elem[$column] == $needle)
                 return true;
         }
         return false;
     }
 }
 
-function array_search_column($needle, $haystack, $column, $strict = false) {
+function array_search_column($haystack, $needle, $column, $strict = false) {
     if ($strict) {
-        foreach ($needle as $k => $elem) {
-            if ($elem[$column] === $haystack)
+        foreach ($haystack as $k => $elem) {
+            if ($elem[$column] === $needle)
                 return $k;
         }
         return false;
     } else {
-        foreach ($needle as $k => $elem) {
-            if ($elem[$column] == $haystack)
+        foreach ($haystack as $k => $elem) {
+            if ($elem[$column] == $needle)
                 return $k;
         }
         return false;
@@ -132,6 +132,45 @@ class PhpCodeFixer {
             if (isset($deprecated_varibales[$used_variable[1]])) {
                 $variable = $deprecated_varibales[$used_variable[1]];
                 fwrite(STDERR, '['.$variable[1].'] Variable '.$used_variable[1].' is deprecated in file '.$file.'['.$used_variable[2].']. ');
+                if ($variable[0] != $used_variable[1])
+                        fwrite(STDERR, 'Consider using '.$variable[0].' instead.');
+                    fwrite(STDERR, PHP_EOL);
+            }
+        }
+
+        // find for methods naming deprecations
+        $methods_naming = $issues->getAll('methods_naming');
+        if (!empty($methods_naming)) {
+            while (in_array_column($tokens, T_CLASS, 0)) {
+                $total = count($tokens);
+                $i = array_search_column($tokens, T_CLASS, 0);
+                $class_start = $i;
+                $class_name = $tokens[$i+2][1];
+                $braces = 1;
+                $i += 5;
+                while (($braces > 0) && (($i+1) <= $total)) {
+                    if ($tokens[$i] == '{') {
+                        $braces++;
+                        echo '++';
+                    } else if ($tokens[$i] == '}') {
+                        $braces--;
+                        echo '--';
+                    } else if (is_array($tokens[$i]) && $tokens[$i][0] == T_FUNCTION) {
+                        $function_name = $tokens[$i+2][1];
+                        foreach ($methods_naming as $methods_naming_checker) {
+                            $checker = ltrim($methods_naming_checker[0], '@');
+                            require_once dirname(dirname(__FILE__)).'/data/'.$checker.'.php';
+                            $checker = __NAMESPACE__.'\\'.$checker;
+                            $result = $checker($class_name, $function_name);
+                            if ($result) {
+                                fwrite(STDERR, '['.$methods_naming_checker[1].'] Method name "'.$function_name.'" in class "'.$class_name.'" is deprecated ('.$methods_naming_checker[0].') in file '.$file.'['.$tokens[$i][2].'].'.PHP_EOL);
+                            }
+
+                        }
+                    }
+                    $i++;
+                }
+                array_splice($tokens, $class_start, $i - $class_start);
             }
         }
     }

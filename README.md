@@ -19,6 +19,7 @@ By providing additional parameter `--target` you can specify version of PHP to p
 
 | Option       | Action                                |
 |--------------|---------------------------------------|
+| --target 7.0-experimental | Use all deprecations from 5.3 to 7.0. |
 | --target 5.6 | Use all deprecations from 5.3 to 5.6. |
 | --target 5.5 | Use all deprecations from 5.3 to 5.5. |
 | --target 5.4 | Use all deprecations from 5.3 to 5.4. |
@@ -39,7 +40,7 @@ The recommended way to install phpcf is via composer.
     "minimum-stability": "dev"
   }
   ```
-  
+
 3. Run `php composer.phar require wapmorgan/php-code-fixer dev-master` or add requirement in composer.json.
   ``` json
   {
@@ -48,7 +49,7 @@ The recommended way to install phpcf is via composer.
     }
   }
   ```
-  
+
 4. Run `php composer.phar update`
 
 # Composer configuration
