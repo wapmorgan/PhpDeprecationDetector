@@ -52,7 +52,7 @@ class PhpCodeFixer {
         foreach (glob($dir.'/*') as $file) {
             if (is_dir($file))
                 self::checkDirInternal($file, $issues);
-            else {
+            else if (is_file($file) && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), array('php', 'php5', 'phtml'))) {
                 self::checkFile($file, $issues);
             }
         }
