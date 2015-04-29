@@ -86,14 +86,17 @@ class PhpCodeFixer {
         $deprecated_ini_settings = $issues->getAll('ini_settings');
         foreach ($tokens as $i => $token) {
             if ($token[0] == T_STRING && in_array($token[1], array('ini_alter', 'ini_set', 'ini_​get', 'ini_restore'))) {
-                $ini_setting = $tokens[$i+2]; // ('ini_setting'
-                if ($ini_setting[0] == T_CONSTANT_ENCAPSED_STRING) $ini_setting[1] = trim($ini_setting[1], '\'"');
-                if (isset($deprecated_ini_settings[$ini_setting[1]])) {
-                    $deprecated_setting = $deprecated_ini_settings[$ini_setting[1]];
-                    fwrite(STDERR, '['.$deprecated_setting[1].'] Ini setting '.$ini_setting[1].' is deprecated in file '.$file.'['.$ini_setting[2].']. ');
-                    if ($deprecated_setting[0] != $ini_setting[1])
-                        fwrite(STDERR, 'Consider using '.$deprecated_setting[0].' instead.');
-                    fwrite(STDERR, PHP_EOL);
+                // syntax structure check
+                if ($tokens[$i+1] == '(' && is_array($tokens[$i+2]) && $tokens[$i+2][0] == T_CONSTANT_ENCAPSED_STRING) {
+                    $ini_setting = $tokens[$i+2]; // ('ini_setting'
+                    $ini_setting[1] = trim($ini_setting[1], '\'"');
+                    if (isset($deprecated_ini_settings[$ini_setting[1]])) {
+                        $deprecated_setting = $deprecated_ini_settings[$ini_setting[1]];
+                        fwrite(STDERR, '['.$deprecated_setting[1].'] Ini setting '.$ini_setting[1].' is deprecated in file '.$file.'['.$ini_setting[2].']. ');
+                        if ($deprecated_setting[0] != $ini_setting[1])
+                            fwrite(STDERR, 'Consider using '.$deprecated_setting[0].' instead.');
+                        fwrite(STDERR, PHP_EOL);
+                    }
                 }
             }
         }
@@ -151,10 +154,10 @@ class PhpCodeFixer {
                 while (($braces > 0) && (($i+1) <= $total)) {
                     if ($tokens[$i] == '{') {
                         $braces++;
-                        echo '++';
+                        /*echo '++';*/
                     } else if ($tokens[$i] == '}') {
                         $braces--;
-                        echo '--';
+                        /*echo '--';*/
                     } else if (is_array($tokens[$i]) && $tokens[$i][0] == T_FUNCTION) {
                         $function_name = $tokens[$i+2][1];
                         foreach ($methods_naming as $methods_naming_checker) {
