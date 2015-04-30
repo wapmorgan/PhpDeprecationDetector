@@ -1,5 +1,5 @@
 {
   "binaries": {
-    "phpcf: "bin/phpcf"
+    "phpcf": "bin/phpcf"
   }
 }
