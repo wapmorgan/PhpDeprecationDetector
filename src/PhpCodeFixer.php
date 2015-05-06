@@ -66,7 +66,7 @@ class PhpCodeFixer {
         while (in_array_column($tokens, T_START_HEREDOC, 0)) {
             $start = array_search_column($tokens, T_START_HEREDOC, 0);
             $end = array_search_column($tokens, T_END_HEREDOC, 0);
-            array_splice($tokens, $start, ($end - $start));
+            array_splice($tokens, $start, ($end - $start + 1));
         }
 
         // find for deprecated functions
