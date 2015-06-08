@@ -34,23 +34,13 @@ The recommended way to install phpcf is via composer.
   $ curl -sS https://getcomposer.org/installer | php
   ```
 
-2. Set `minimum-stability` option in composer.json to "dev".
-  ``` json
-  {
-    "minimum-stability": "dev"
-  }
-  ```
-
-3. Run `php composer.phar require wapmorgan/php-code-fixer dev-master` or add requirement in composer.json.
+2. Run `php composer.phar require wapmorgan/php-code-fixer` or add requirement in composer.json.
   ``` json
   {
     "require": {
-      "wapmorgan/php-code-fixer": "dev-master"
+      "wapmorgan/php-code-fixer": "*"
     }
   }
   ```
 
 4. Run `php composer.phar update`
-
-# Composer configuration
-To install phpcf and its dependencies `minimum-stability` in your composer.json should be set to `dev`.
