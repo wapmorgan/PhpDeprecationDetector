@@ -25,7 +25,6 @@ if (!in_array($args['--target'], $available_versions, true)) {
     exit();
 }
 
-
 // init issues bank
 $issues = new IssuesBank();
 foreach ($available_versions as $version) {
@@ -46,3 +45,22 @@ foreach ($args['FILES'] as $file) {
         PhpCodeFixer::checkFile($file, $issues);
     }
 }
+
+/**
+ * @param string format Sets format for size.
+ * In format following macroses are available:
+ * - %.@
+ */
+function size_format($bytes, $precision = 2) {
+    $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB');
+
+    $bytes = max($bytes, 0);
+    $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+    $pow = min($pow, count($units) - 1);
+
+    $bytes /= pow(1024, $pow);
+
+    return round($bytes, $precision) . ' ' . $units[$pow];
+}
+
+echo 'Peak memory usage: '.size_format(memory_get_peak_usage());
