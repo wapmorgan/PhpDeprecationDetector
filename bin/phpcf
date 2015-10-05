@@ -9,10 +9,11 @@ use wapmorgan\PhpCodeFixer\PhpCodeFixer;
 
 
 $doc = <<<DOC
-Usage: phpcf [--target VERSION]  [FILES ...]
+Usage: phpcf [--target VERSION] [--max-size SIZE]  [FILES ...]
 
 Options:
   --target VERSION  target php version [default: 5.6]
+  --max-size SIZE   sets max size of php file. If size of file is above this value, file will be skipped [default: 1mb]
 
 DOC;
 
@@ -23,6 +24,20 @@ $available_versions = array('5.3', '5.4', '5.5', '5.6', '7.0-experimental');
 if (!in_array($args['--target'], $available_versions, true)) {
     fwrite(STDERR, 'Target version is not valid.');
     exit();
+}
+
+$size_units = array('b', 'kb', 'mb', 'gb');
+if (!empty($args['--max-size'])) {
+    foreach ($size_units as $unit) {
+        if (stripos($args['--max-size'], $unit) > 0) {
+            $max_size_value = stristr($args['--max-size'], $unit, true);
+            $max_size = $max_size_value * pow(1024, array_search($unit, $size_units));
+        }
+    }
+    if (isset($max_size)) {
+        echo 'Max file size set to: '.size_format('%.3F Ui', $max_size).PHP_EOL;
+        PhpCodeFixer::$fileSizeLimit = $max_size;
+    }
 }
 
 // init issues bank
@@ -48,19 +63,46 @@ foreach ($args['FILES'] as $file) {
 
 /**
  * @param string format Sets format for size.
- * In format following macroses are available:
- * - %.@
+ * Format should containt string parseable by sprintf function and contain one %F macro that will be replaced by size. Another macro is U/u. It will be replaced with used unit. U for uppercase, u - lowercase. If 'i' is present at the end of format string, size multiplier will be set to 1024 (and units be KiB, MiB and so on), otherwise multiplier is set to 1000.
+ * @example "%.0F Ui" 617 KiB
+ * @example "%.3F Ui" 617.070 KiB
+ * @example "%10.3F Ui"     616.85 KiB
+ * @example "%.3F U" 632.096 KB
+ *
+ * @param integer $bytes Size in bytes
+ * @param string $unit Sets default unit. Can have these values: B, KB, MG, GB, TB, PB, EB, ZB and YB
  */
-function size_format($bytes, $precision = 2) {
-    $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB');
-
+function size_format($format, $bytes, $unit = null) {
+    $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
     $bytes = max($bytes, 0);
-    $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
-    $pow = min($pow, count($units) - 1);
+    $unit = strtoupper($unit);
 
-    $bytes /= pow(1024, $pow);
+    if (substr($format, -1) === 'i') {
+        $multiplier = 1024;
+        $format = substr($format, 0, -1);
+    }
+    else
+        $multiplier = 1000;
 
-    return round($bytes, $precision) . ' ' . $units[$pow];
+    if ($unit === null || !in_array($unit, $units)) {
+        $pow = floor(($bytes ? log($bytes) : 0) / log($multiplier));
+        $pow = min($pow, count($units) - 1);
+
+        $bytes /= pow($multiplier, $pow);
+        $unit = $units[$pow];
+    } else {
+        $pow = array_search($unit, $units);
+        $bytes /= pow($multiplier, $pow);
+    }
+
+    if ($multiplier == 1024)
+        $unit = (strlen($unit) == 2) ? substr($unit, 0, 1).'iB' : $unit;
+    if (strpos($format, 'u') !== false)
+        $format = str_replace('u', strtolower($unit), $format);
+    else
+        $format = str_replace('U', $unit, $format);
+
+    return sprintf($format, $bytes);
 }
 
-echo 'Peak memory usage: '.size_format(memory_get_peak_usage());
+echo 'Peak memory usage: '.size_format('%.3F U', memory_get_peak_usage(), 'mb');

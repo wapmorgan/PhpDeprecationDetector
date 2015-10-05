@@ -43,6 +43,8 @@ function array_filter_by_column($source, $needle, $column) {
 }
 
 class PhpCodeFixer {
+    static public $fileSizeLimit;
+
     static public function checkDir($dir, IssuesBank $issues) {
         echo 'Scanning '.$dir.' ...'.PHP_EOL;
         self::checkDirInternal($dir, $issues);
@@ -59,8 +61,11 @@ class PhpCodeFixer {
     }
 
     static public function checkFile($file, IssuesBank $issues) {
-        $source = file_get_contents($file);
-        $tokens = token_get_all($source);
+        if (self::$fileSizeLimit !== null && filesize($file) > self::$fileSizeLimit) {
+            fwrite(STDOUT, 'Skipping file '.$file.' due to file size limit.'.PHP_EOL);
+            return;
+        }
+        $tokens = token_get_all(file_get_contents($file));
 
         // cut off heredoc, comments
         while (in_array_column($tokens, T_START_HEREDOC, 0)) {
