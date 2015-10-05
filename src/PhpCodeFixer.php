@@ -163,7 +163,7 @@ class PhpCodeFixer {
                     } else if ($tokens[$i] == '}') {
                         $braces--;
                         /*echo '--';*/
-                    } else if (is_array($tokens[$i]) && $tokens[$i][0] == T_FUNCTION) {
+                    } else if (is_array($tokens[$i]) && $tokens[$i][0] == T_FUNCTION && is_array($tokens[$i+2])) {
                         $function_name = $tokens[$i+2][1];
                         foreach ($methods_naming as $methods_naming_checker) {
                             $checker = ltrim($methods_naming_checker[0], '@');
