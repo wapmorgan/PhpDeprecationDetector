@@ -105,4 +105,4 @@ function size_format($format, $bytes, $unit = null) {
     return sprintf($format, $bytes);
 }
 
-echo 'Peak memory usage: '.size_format('%.3F U', memory_get_peak_usage(), 'mb');
+echo 'Peak memory usage: '.size_format('%.3F U', memory_get_peak_usage(), 'mb').PHP_EOL;
