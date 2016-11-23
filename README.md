@@ -4,7 +4,7 @@
 PhpCodeFixer finds usage of deprecated functions, variables and ini directives in your php code.
 
 # Example of usage
-To scan you files or folder launch `phpcf` and pass file or directory names.
+To scan your files or folder launch `phpcf` and pass file or directory names.
 ```
 > php bin\phpcf tests
 Scanning tests ...
@@ -20,7 +20,8 @@ By providing additional parameter `--target` you can specify version of PHP to p
 
 | Option       | Action                                |
 |--------------|---------------------------------------|
-| --target 7.0-experimental | Use all deprecations from 5.3 to 7.0. |
+| --target 7.1 | Use all deprecations from 5.3 to 7.1. |
+| --target 7.0 | Use all deprecations from 5.3 to 7.0. |
 | --target 5.6 | Use all deprecations from 5.3 to 5.6. |
 | --target 5.5 | Use all deprecations from 5.3 to 5.5. |
 | --target 5.4 | Use all deprecations from 5.3 to 5.4. |

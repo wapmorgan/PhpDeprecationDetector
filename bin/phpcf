@@ -12,14 +12,14 @@ $doc = <<<DOC
 Usage: phpcf [--target VERSION] [--max-size SIZE]  [FILES ...]
 
 Options:
-  --target VERSION  target php version [default: 5.6]
+  --target VERSION  target php version [default: 7.1]
   --max-size SIZE   sets max size of php file. If size of file is above this value, file will be skipped [default: 1mb]
 
 DOC;
 
 $args = Docopt::handle($doc);
 
-$available_versions = array('5.3', '5.4', '5.5', '5.6', '7.0-experimental');
+$available_versions = array('5.3', '5.4', '5.5', '5.6', '7.0', '7.1');
 
 if (!in_array($args['--target'], $available_versions, true)) {
     fwrite(STDERR, 'Target version is not valid.');
@@ -43,7 +43,7 @@ if (!empty($args['--max-size'])) {
 // init issues bank
 $issues = new IssuesBank();
 foreach ($available_versions as $version) {
-    $version_issues = include dirname(dirname(__FILE__)).'/data/'.(strpos($version, '-') !== false ? strstr($version, '-', true) : $version).'.php';
+    $version_issues = include dirname(dirname(__FILE__)).'/data/'.$version.'.php';
 
     foreach ($version_issues as $issues_type => $issues_list) {
         $issues->import($version, $issues_type, $issues_list);
