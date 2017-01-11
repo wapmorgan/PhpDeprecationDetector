@@ -9,7 +9,7 @@ use wapmorgan\PhpCodeFixer\PhpCodeFixer;
 
 
 $doc = <<<DOC
-Usage: phpcf [--target VERSION] [--max-size SIZE] [FILES ...]
+Usage: phpcf [--target VERSION] [--max-size SIZE] FILES...
 
 Options:
   -t, --target VERSION  target php version [default: 7.1]
@@ -73,7 +73,7 @@ if (!empty($reports)) {
         foreach ($versions as $version) {
             $issues = $report[$version];
             foreach ($issues as $issue) {
-                echo sprintf(' %3s | %-16s | %30s | %s', $version, $issue[0], substrIfLonger($issue[3].':'.$issue[4], 30), str_replace('_', ' ', ucfirst($issue[0])).' '.$issue[1].' is '.($issue[0] == 'identifier' ? 'used by PHP code' : 'deprecated').'. ').PHP_EOL;
+                echo sprintf(' %3s | %-16s | %30s | %s', $version, $issue[0], substrIfLonger($issue[3].':'.$issue[4], 30), str_replace('_', ' ', ucfirst($issue[0])).' '.$issue[1].' is '.($issue[0] == 'identifier' ? 'reserved by PHP core' : 'deprecated').'. ').PHP_EOL;
                 if (!empty($issue[2])) {
                     $replace_suggestions[$issue[0]][$issue[1]] = $issue[2];
                 }

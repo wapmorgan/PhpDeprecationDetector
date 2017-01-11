@@ -1,10 +1,34 @@
 # PhpCodeFixer
 [![Composer package](http://xn--e1adiijbgl.xn--p1acf/badge/wapmorgan/php-code-fixer)](https://packagist.org/packages/wapmorgan/php-code-fixer) [![Latest Stable Version](https://poser.pugx.org/wapmorgan/php-code-fixer/v/stable)](https://packagist.org/packages/wapmorgan/php-code-fixer) [![Total Downloads](https://poser.pugx.org/wapmorgan/php-code-fixer/downloads)](https://packagist.org/packages/wapmorgan/php-code-fixer) [![License](https://poser.pugx.org/wapmorgan/php-code-fixer/license)](https://packagist.org/packages/wapmorgan/php-code-fixer)
 
-PhpCodeFixer finds deprecated functions, wrong functions usage, variables, ini directives and restricted identifiers in your php code.
+PhpCodeFixer finds deprecated functions, wrong functions usage, variables, ini directives and restricted identifiers in your php code. It literally helps you fix code that can fail after migration to PHP 7.
+
+1. Usage
+2. Example
+3. Installation
+
+# Usage
+To scan your files or folder launch `bin/phpcf` and pass file or directory names.
+```
+Usage: phpcf [--target VERSION] [--max-size SIZE] FILES...
+
+Options:
+  -t, --target VERSION  target php version [default: 7.1]
+  -s, --max-size SIZE   sets max size of php file. If size of file is above this value, file will be skipped [default: 1mb]
+```
+
+By providing additional parameter `--target` you can specify version of PHP to perform less checks.
+
+| Option       | Action                                      |
+|--------------|---------------------------------------------|
+| --target 7.1 | By default. Use all deprecations up to 7.1. |
+| --target 7.0 | Use all deprecations from 5.3 to 7.0.       |
+| --target 5.6 | Use all deprecations from 5.3 to 5.6.       |
+| --target 5.5 | Use all deprecations from 5.3 to 5.5.       |
+| --target 5.4 | Use all deprecations from 5.3 to 5.4.       |
+| --target 5.3 | Use deprecations from 5.3 only.             |
 
 # Example of usage
-To scan your files or folder launch `phpcf` and pass file or directory names.
 ```
 > php bin\phpcf tests
 Max file size set to: 1.000 MiB
@@ -33,17 +57,6 @@ Replace Suggestions:
 3. Don't use variable $HTTP_RAW_POST_DATA. Instead use php://input
 Peak memory usage: 0.938 MB
 ```
-
-By providing additional parameter `--target` you can specify version of PHP to perform less checks.
-
-| Option       | Action                                      |
-|--------------|---------------------------------------------|
-| --target 7.1 | By default. Use all deprecations up to 7.1. |
-| --target 7.0 | Use all deprecations from 5.3 to 7.0.       |
-| --target 5.6 | Use all deprecations from 5.3 to 5.6.       |
-| --target 5.5 | Use all deprecations from 5.3 to 5.5.       |
-| --target 5.4 | Use all deprecations from 5.3 to 5.4.       |
-| --target 5.3 | Use deprecations from 5.3 only.             |
 
 # Installation
 ## Composer
