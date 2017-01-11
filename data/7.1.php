@@ -40,4 +40,12 @@ return array(
         'session.hash_function',
         'session.hash_bits_per_character',
     ),
+    'functions_usage' => array(
+        'mb_ereg_replace' => '@mb_ereg_replace_e_modifier',
+        'mb_eregi_replace' => '@mb_ereg_replace_e_modifier'
+    ),
+    'identifiers' => array(
+        'void',
+        'iterable'
+    ),
 );

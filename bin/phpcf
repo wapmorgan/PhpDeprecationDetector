@@ -9,11 +9,11 @@ use wapmorgan\PhpCodeFixer\PhpCodeFixer;
 
 
 $doc = <<<DOC
-Usage: phpcf [--target VERSION] [--max-size SIZE]  [FILES ...]
+Usage: phpcf [--target VERSION] [--max-size SIZE] [FILES ...]
 
 Options:
-  --target VERSION  target php version [default: 7.1]
-  --max-size SIZE   sets max size of php file. If size of file is above this value, file will be skipped [default: 1mb]
+  -t, --target VERSION  target php version [default: 7.1]
+  -s, --max-size SIZE   sets max size of php file. If size of file is above this value, file will be skipped [default: 1mb]
 
 DOC;
 
@@ -53,11 +53,43 @@ foreach ($available_versions as $version) {
         break;
 }
 
+$reports = array();
+
 foreach ($args['FILES'] as $file) {
     if (is_dir($file)) {
-        PhpCodeFixer::checkDir($file, $issues);
+        $reports[] = PhpCodeFixer::checkDir($file, $issues);
     } else {
-        PhpCodeFixer::checkFile($file, $issues);
+        $reports[] = PhpCodeFixer::checkFile($file, $issues);
+    }
+}
+
+if (!empty($reports)) {
+    $replace_suggestions = array();
+    echo sprintf(' %3s | %16s | %30s | %s', 'PHP', 'Type', 'File:Line', 'Issue').PHP_EOL;
+    foreach ($reports as $report) {
+        $report = $report->getReport();
+        $versions = array_keys($report);
+        sort($versions);
+        foreach ($versions as $version) {
+            $issues = $report[$version];
+            foreach ($issues as $issue) {
+                echo sprintf(' %3s | %-16s | %30s | %s', $version, $issue[0], substrIfLonger($issue[3].':'.$issue[4], 30), str_replace('_', ' ', ucfirst($issue[0])).' '.$issue[1].' is '.($issue[0] == 'identifier' ? 'used by PHP code' : 'deprecated').'. ').PHP_EOL;
+                if (!empty($issue[2])) {
+                    $replace_suggestions[$issue[0]][$issue[1]] = $issue[2];
+                }
+            }
+        }
+    }
+
+    if (!empty($replace_suggestions)) {
+        echo PHP_EOL;
+        echo 'Replace Suggestions:'.PHP_EOL;
+        $i = 1;
+        foreach ($replace_suggestions as $type => $suggestion) {
+            foreach ($suggestion as $issue => $replacement) {
+                echo ($i++).'. Don\'t use '.$type.' '.$issue.'. Instead use '.$replacement.PHP_EOL;
+            }
+        }
     }
 }
 
@@ -103,6 +135,13 @@ function size_format($format, $bytes, $unit = null) {
         $format = str_replace('U', $unit, $format);
 
     return sprintf($format, $bytes);
+}
+
+function substrIfLonger($string, $maxLength) {
+    if (strlen($string) > $maxLength)
+        return '...'.substr($string, strlen($string)-$maxLength+3);
+    else
+        return $string;
 }
 
 echo 'Peak memory usage: '.size_format('%.3F U', memory_get_peak_usage(), 'mb').PHP_EOL;

@@ -1,6 +1,8 @@
 <?php
 namespace wapmorgan\PhpCodeFixer;
 
+if (!defined('T_TRAIT')) define('T_TRAIT', 'trait');
+
 function in_array_column($haystack, $needle, $column, $strict = false) {
     if ($strict) {
         foreach ($haystack as $k => $elem) {
@@ -47,24 +49,27 @@ class PhpCodeFixer {
 
     static public function checkDir($dir, IssuesBank $issues) {
         echo 'Scanning '.$dir.' ...'.PHP_EOL;
-        self::checkDirInternal($dir, $issues);
+        $report = new Report();
+        self::checkDirInternal($dir, $issues, $report);
+        return $report;
     }
 
-    static protected function checkDirInternal($dir, IssuesBank $issues) {
+    static protected function checkDirInternal($dir, IssuesBank $issues, Report $report) {
         foreach (glob($dir.'/*') as $file) {
             if (is_dir($file))
-                self::checkDirInternal($file, $issues);
+                self::checkDirInternal($file, $issues, $report);
             else if (is_file($file) && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), array('php', 'php5', 'phtml'))) {
-                self::checkFile($file, $issues);
+                self::checkFile($file, $issues, $report);
             }
         }
     }
 
-    static public function checkFile($file, IssuesBank $issues) {
+    static public function checkFile($file, IssuesBank $issues, Report $report = null) {
         if (self::$fileSizeLimit !== null && filesize($file) > self::$fileSizeLimit) {
             fwrite(STDOUT, 'Skipping file '.$file.' due to file size limit.'.PHP_EOL);
             return;
         }
+        if (empty($report)) $report = new Report();
         $tokens = token_get_all(file_get_contents($file));
 
         // cut off heredoc, comments
@@ -80,10 +85,7 @@ class PhpCodeFixer {
         foreach ($used_functions as $used_function) {
             if (isset($deprecated_functions[$used_function[1]])) {
                 $function = $deprecated_functions[$used_function[1]];
-                fwrite(STDERR, '['.$function[1].'] Function '.$used_function[1].' is deprecated in file '.$file.'['.$used_function[2].']. ');
-                if ($function[0] != $used_function[1])
-                    fwrite(STDERR, 'Consider using '.$function[0].' instead.');
-                fwrite(STDERR, PHP_EOL);
+                $report->add($function[1], 'function', $used_function[1], ($function[0] != $used_function[1] ? $function[0] : null), $file, $used_function[2]);
             }
         }
 
@@ -97,10 +99,7 @@ class PhpCodeFixer {
                     $ini_setting[1] = trim($ini_setting[1], '\'"');
                     if (isset($deprecated_ini_settings[$ini_setting[1]])) {
                         $deprecated_setting = $deprecated_ini_settings[$ini_setting[1]];
-                        fwrite(STDERR, '['.$deprecated_setting[1].'] Ini setting '.$ini_setting[1].' is deprecated in file '.$file.'['.$ini_setting[2].']. ');
-                        if ($deprecated_setting[0] != $ini_setting[1])
-                            fwrite(STDERR, 'Consider using '.$deprecated_setting[0].' instead.');
-                        fwrite(STDERR, PHP_EOL);
+                        $report->add($deprecated_setting[1], 'ini', $ini_setting[1], ($deprecated_setting[0] != $ini_setting[1] ? $deprecated_setting[0] : null), $file, $ini_setting[2]);
                     }
                 }
             }
@@ -129,8 +128,9 @@ class PhpCodeFixer {
             require_once dirname(dirname(__FILE__)).'/data/'.$fixer.'.php';
             $fixer = __NAMESPACE__.'\\'.$fixer;
             $result = $fixer($function);
-            if ($result)
-                fwrite(STDERR, '['.$deprecated_functions_usage[$token[1]][1].'] Function '.$token[1].' usage is deprecated ('.$deprecated_functions_usage[$token[1]][0].') in file '.$file.'['.$token[2].'].'.PHP_EOL);
+            if ($result) {
+                $report->add($deprecated_functions_usage[$token[1]][1], 'function_usage', $token[1].' ('.$deprecated_functions_usage[$token[1]][0].')', null, $file, $token[2]);
+            }
         }
 
         // find for deprecated variables
@@ -139,10 +139,23 @@ class PhpCodeFixer {
         foreach ($used_variables as $used_variable) {
             if (isset($deprecated_varibales[$used_variable[1]])) {
                 $variable = $deprecated_varibales[$used_variable[1]];
-                fwrite(STDERR, '['.$variable[1].'] Variable '.$used_variable[1].' is deprecated in file '.$file.'['.$used_variable[2].']. ');
-                if ($variable[0] != $used_variable[1])
-                        fwrite(STDERR, 'Consider using '.$variable[0].' instead.');
-                    fwrite(STDERR, PHP_EOL);
+                $report->add($variable[1], 'variable', $used_variable[1], ($variable[0] != $used_variable[1] ? $variable[0] : null), $file, $used_variable[2]);
+            }
+        }
+
+        // find for reserved identifiers used as names
+        $identifiers = $issues->getAll('identifiers');
+        if (!empty($identifiers)) {
+            foreach ($tokens as $i => $token) {
+                if (in_array($token[0], array(T_CLASS, T_INTERFACE, T_TRAIT))) {
+                    if (isset($tokens[$i+2]) && is_array($tokens[$i+2]) && $tokens[$i+2][0] == T_STRING) {
+                        $used_identifier = $tokens[$i+2];
+                        if (isset($identifiers[$used_identifier[1]])) {
+                            $identifier = $identifiers[$used_identifier[1]];
+                            $report->add($identifier[1], 'identifier', $used_identifier[1], null, $file, $used_identifier[2]);
+                        }
+                    }
+                }
             }
         }
 
@@ -171,7 +184,7 @@ class PhpCodeFixer {
                             $checker = __NAMESPACE__.'\\'.$checker;
                             $result = $checker($class_name, $function_name);
                             if ($result) {
-                                fwrite(STDERR, '['.$methods_naming_checker[1].'] Method name "'.$function_name.'" in class "'.$class_name.'" is deprecated ('.$methods_naming_checker[0].') in file '.$file.'['.$tokens[$i][2].'].'.PHP_EOL);
+                                $report->add($methods_naming_checker[1], 'method_name', $function_name.':'.$class_name.' ('.$methods_naming_checker[0].')', null, $file, $tokens[$i][2]);
                             }
 
                         }
@@ -181,6 +194,7 @@ class PhpCodeFixer {
                 array_splice($tokens, $class_start, $i - $class_start);
             }
         }
+        return $report;
     }
 
     static public function makeFunctionCallTree(array $tokens) {
@@ -209,8 +223,12 @@ class PhpCodeFixer {
     static public function trimSpaces(array $tokens) {
         $trimmed = array();
         foreach ($tokens as $token) {
-            if (is_array($token) && $token[0] == T_WHITESPACE)
-                continue;
+            if (is_array($token)) {
+                if ($token[0] == T_WHITESPACE)
+                    continue;
+                else
+                    $trimmed[] = self::trimSpaces($token);
+            }
             else
                 $trimmed[] = $token;
         }
