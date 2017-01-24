@@ -30,7 +30,7 @@ $size_units = array('b', 'kb', 'mb', 'gb');
 if (!empty($args['--max-size'])) {
     foreach ($size_units as $unit) {
         if (stripos($args['--max-size'], $unit) > 0) {
-            $max_size_value = stristr($args['--max-size'], $unit, true);
+            $max_size_value = (int)stristr($args['--max-size'], $unit, true);
             $max_size = $max_size_value * pow(1024, array_search($unit, $size_units));
         }
     }
