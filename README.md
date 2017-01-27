@@ -59,6 +59,7 @@ Peak memory usage: 0.938 MB
 ```
 
 # Installation
+
 ## Composer
 The recommended way to install phpcf is via composer.
 
