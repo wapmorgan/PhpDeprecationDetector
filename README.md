@@ -9,6 +9,7 @@ PhpCodeFixer finds deprecated functions, wrong functions usage, variables, ini d
 
 # Usage
 To scan your files or folder launch `bin/phpcf` and pass file or directory names.
+
 ```
 Usage: phpcf [--target VERSION] [--max-size SIZE] FILES...
 
@@ -64,12 +65,14 @@ Peak memory usage: 0.938 MB
 The recommended way to install phpcf is via composer.
 
 1. If you do not have composer installed, download the [`composer.phar`](https://getcomposer.org/composer.phar) executable or use the installer.
-  ``` sh
+
+  ```sh
   $ curl -sS https://getcomposer.org/installer | php
   ```
 
 2. Run `php composer.phar require wapmorgan/php-code-fixer` or add requirement in composer.json.
-  ``` json
+
+  ```json
   {
     "require": {
       "wapmorgan/php-code-fixer": "*"
