@@ -35,11 +35,16 @@ function array_search_column($haystack, $needle, $column, $strict = false) {
     }
 }
 
-function array_filter_by_column($source, $needle, $column) {
+function array_filter_by_column($source, $needle, $column, $preserveIndexes = false) {
     $filtered = array();
-    foreach ($source as $elem) {
-        if ($elem[$column] == $needle)
-            $filtered[] = $elem;
+    if ($preserveIndexes) {
+        foreach ($source as $i => $elem)
+            if ($elem[$column] == $needle)
+                $filtered[$i] = $elem;
+    } else {
+        foreach ($source as $elem)
+            if ($elem[$column] == $needle)
+                $filtered[] = $elem;
     }
     return $filtered;
 }
@@ -81,9 +86,12 @@ class PhpCodeFixer {
 
         // find for deprecated functions
         $deprecated_functions = $issues->getAll('functions');
-        $used_functions = array_filter_by_column($tokens, T_STRING, 0);
-        foreach ($used_functions as $used_function) {
+        $used_functions = array_filter_by_column($tokens, T_STRING, 0, true);
+        foreach ($used_functions as $used_function_i => $used_function) {
             if (isset($deprecated_functions[$used_function[1]])) {
+                // additional check for "(" after this token
+                if (!isset($tokens[$used_function_i+1]) || $tokens[$used_function_i+1] != '(')
+                    continue;
                 $function = $deprecated_functions[$used_function[1]];
                 $report->add($function[1], 'function', $used_function[1], ($function[0] != $used_function[1] ? $function[0] : null), $file, $used_function[2]);
             }
