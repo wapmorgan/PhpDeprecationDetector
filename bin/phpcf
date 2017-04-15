@@ -6,6 +6,7 @@ require $vendor_dir.'/autoload.php';
 
 use wapmorgan\PhpCodeFixer\IssuesBank;
 use wapmorgan\PhpCodeFixer\PhpCodeFixer;
+use wapmorgan\PhpCodeFixer\TerminalInfo;
 
 
 $doc = <<<DOC
@@ -63,9 +64,17 @@ foreach ($args['FILES'] as $file) {
     }
 }
 
+if (TerminalInfo::isInteractive()) {
+    $width = TerminalInfo::getWidth();
+} else {
+    $width = 80;
+}
+
+$variable_length = max(30, floor(($width - 31) * 0.4));
+
 if (!empty($reports)) {
     $replace_suggestions = array();
-    echo sprintf(' %3s | %16s | %30s | %s', 'PHP', 'Type', 'File:Line', 'Issue').PHP_EOL;
+    echo sprintf(' %3s | %16s | %'.$variable_length.'s | %s', 'PHP', 'Type', 'File:Line', 'Issue').PHP_EOL;
     foreach ($reports as $report) {
         $report = $report->getReport();
         $versions = array_keys($report);
@@ -73,7 +82,7 @@ if (!empty($reports)) {
         foreach ($versions as $version) {
             $issues = $report[$version];
             foreach ($issues as $issue) {
-                echo sprintf(' %3s | %-16s | %30s | %s', $version, $issue[0], substrIfLonger($issue[3].':'.$issue[4], 30), str_replace('_', ' ', ucfirst($issue[0])).' '.$issue[1].' is '.($issue[0] == 'identifier' ? 'reserved by PHP core' : 'deprecated').'. ').PHP_EOL;
+                echo sprintf(' %3s | %-16s | %'.$variable_length.'s | %s', $version, $issue[0], substrIfLonger($issue[3].':'.$issue[4], $variable_length), str_replace('_', ' ', ucfirst($issue[0])).' '.$issue[1].' is '.($issue[0] == 'identifier' ? 'reserved by PHP core' : 'deprecated').'. ').PHP_EOL;
                 if (!empty($issue[2])) {
                     $replace_suggestions[$issue[0]][$issue[1]] = $issue[2];
                 }
