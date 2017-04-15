@@ -174,29 +174,34 @@ class PhpCodeFixer {
                 $total = count($tokens);
                 $i = array_search_column($tokens, T_CLASS, 0);
                 $class_start = $i;
-                $class_name = $tokens[$i+2][1];
-                $braces = 1;
-                $i += 5;
-                while (($braces > 0) && (($i+1) <= $total)) {
-                    if ($tokens[$i] == '{') {
-                        $braces++;
-                        /*echo '++';*/
-                    } else if ($tokens[$i] == '}') {
-                        $braces--;
-                        /*echo '--';*/
-                    } else if (is_array($tokens[$i]) && $tokens[$i][0] == T_FUNCTION && is_array($tokens[$i+2])) {
-                        $function_name = $tokens[$i+2][1];
-                        foreach ($methods_naming as $methods_naming_checker) {
-                            $checker = ltrim($methods_naming_checker[0], '@');
-                            require_once dirname(dirname(__FILE__)).'/data/'.$checker.'.php';
-                            $checker = __NAMESPACE__.'\\'.$checker;
-                            $result = $checker($class_name, $function_name);
-                            if ($result) {
-                                $report->add($methods_naming_checker[1], 'method_name', $function_name.':'.$class_name.' ('.$methods_naming_checker[0].')', null, $file, $tokens[$i][2]);
-                            }
+                if (!is_array($tokens[$class_start-1]) || $tokens[$class_start-1][1] != '::') {
+                    $class_name = $tokens[$i+2][1];
+                    $braces = 1;
+                    $i += 5;
+                    while (($braces > 0) && (($i+1) <= $total)) {
+                        if ($tokens[$i] == '{') {
+                            $braces++;
+                            /*echo '++';*/
+                        } else if ($tokens[$i] == '}') {
+                            $braces--;
+                            /*echo '--';*/
+                        } else if (is_array($tokens[$i]) && $tokens[$i][0] == T_FUNCTION && is_array($tokens[$i+2])) {
+                            $function_name = $tokens[$i+2][1];
+                            foreach ($methods_naming as $methods_naming_checker) {
+                                $checker = ltrim($methods_naming_checker[0], '@');
+                                require_once dirname(dirname(__FILE__)).'/data/'.$checker.'.php';
+                                $checker = __NAMESPACE__.'\\'.$checker;
+                                $result = $checker($class_name, $function_name);
+                                if ($result) {
+                                    $report->add($methods_naming_checker[1], 'method_name', $function_name.':'.$class_name.' ('.$methods_naming_checker[0].')', null, $file, $tokens[$i][2]);
+                                }
 
+                            }
                         }
+                        $i++;
                     }
+                } else {
+                    // ::class
                     $i++;
                 }
                 array_splice($tokens, $class_start, $i - $class_start);
