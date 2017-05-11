@@ -1,4 +1,4 @@
-#!/usr/bin/php
+#!/usr/bin/env php
 <?php
 // ? create-project installation : require installation
 $vendor_dir = is_dir(dirname(dirname((__FILE__))).'/vendor') ? dirname(dirname((__FILE__))).'/vendor' : dirname(dirname(dirname(dirname(__FILE__))));
