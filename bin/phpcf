@@ -71,7 +71,7 @@ if (TerminalInfo::isInteractive()) {
 }
 
 $variable_length = max(30, floor(($width - 31) * 0.4));
-
+$has_issue = false;
 if (!empty($reports)) {
     $replace_suggestions = array();
     echo sprintf(' %3s | %16s | %'.$variable_length.'s | %s', 'PHP', 'Type', 'File:Line', 'Issue').PHP_EOL;
@@ -82,6 +82,7 @@ if (!empty($reports)) {
         foreach ($versions as $version) {
             $issues = $report[$version];
             foreach ($issues as $issue) {
+                $has_issue = true;
                 echo sprintf(' %3s | %-16s | %'.$variable_length.'s | %s', $version, $issue[0], substrIfLonger($issue[3].':'.$issue[4], $variable_length), str_replace('_', ' ', ucfirst($issue[0])).' '.$issue[1].' is '.($issue[0] == 'identifier' ? 'reserved by PHP core' : 'deprecated').'. ').PHP_EOL;
                 if (!empty($issue[2])) {
                     $replace_suggestions[$issue[0]][$issue[1]] = $issue[2];
@@ -154,3 +155,6 @@ function substrIfLonger($string, $maxLength) {
 }
 
 echo 'Peak memory usage: '.size_format('%.3F U', memory_get_peak_usage(), 'mb').PHP_EOL;
+if ($has_issue) {
+    exit(1);
+}
