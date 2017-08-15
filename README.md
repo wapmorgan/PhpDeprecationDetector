@@ -64,7 +64,7 @@ Peak memory usage: 0.938 MB
 ## Phar
 The recommended way to install _phpcf_ is as phar-package.
 
-1. Just download a phar from [releases page](https://github.com/wapmorgan/PhpCodeAnalyzer/releases)
+1. Just download a phar from [releases page](https://github.com/wapmorgan/PhpCodeFixer/releases)
 2. Make it executable and put it in one of folders listed in your `$PATH`:
     ```sh
     chmod +x phpcf.phar
