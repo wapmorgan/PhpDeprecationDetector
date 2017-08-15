@@ -3,9 +3,9 @@
 
 PhpCodeFixer finds deprecated functions, wrong functions usage, variables, ini directives and restricted identifiers in your php code. It literally helps you fix code that can fail after migration to PHP 7.
 
-1. Usage
-2. Example
-3. Installation
+1. [Usage](#usage)
+2. [Example](#example)
+3. [Installation](#installation)
 
 # Usage
 To scan your files or folder launch `phpcf` and pass file or directory names.
