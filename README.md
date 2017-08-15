@@ -8,7 +8,7 @@ PhpCodeFixer finds deprecated functions, wrong functions usage, variables, ini d
 3. Installation
 
 # Usage
-To scan your files or folder launch `bin/phpcf` and pass file or directory names.
+To scan your files or folder launch `phpcf` and pass file or directory names.
 
 ```
 Usage: phpcf [--target VERSION] [--max-size SIZE] FILES...
@@ -31,7 +31,7 @@ By providing additional parameter `--target` you can specify version of PHP to p
 
 # Example of usage
 ```
-> php bin\phpcf tests
+> phpcf tests
 Max file size set to: 1.000 MiB
 Scanning tests ...
  PHP |             Type |                      File:Line | Issue
@@ -61,8 +61,20 @@ Peak memory usage: 0.938 MB
 
 # Installation
 
+## Phar
+The recommended way to install _phpcf_ is as phar-package.
+
+1. Just download a phar from [releases page](https://github.com/wapmorgan/PhpCodeAnalyzer/releases)
+2. Make it executable and put it in one of folders listed in your `$PATH`:
+    ```sh
+    chmod +x phpcf.phar
+    sudo mv phpcf.phar /usr/local/bin/phpcf
+    ```
+
+Further I will use commands for PhpCodeFixer installed as phar or globally with composer, but if you've installed it locally with composer, just replace `phpcf` command with `vendor/bin/phpcf`.
+
 ## Composer
-The recommended way to install phpcf is via composer.
+Another way to install _phpcf_ is via composer.
 
 1. If you do not have composer installed, download the [`composer.phar`](https://getcomposer.org/composer.phar) executable or use the installer.
 
@@ -83,7 +95,7 @@ The recommended way to install phpcf is via composer.
 3. Run `php composer.phar update`
 
 ### Global installation
-You can get more profit when phpcf installed globally.
+You can get more profit when _phpcf_ installed globally.
 
 1. If you do not have composer installed, look previous section and install composer on your server.
 
