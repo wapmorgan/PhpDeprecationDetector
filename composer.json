@@ -11,5 +11,18 @@
             "wapmorgan\\PhpCodeFixer\\": "src/"
         }
     },
-    "bin": ["bin/phpcf"]
+    "bin": ["bin/phpcf"],
+    "extra": {
+        "phar-builder": {
+            "compression": "BZip2",
+            "name": "phpcf.phar",
+            "output-dir": "./",
+            "entry-point": "bin/phpcf",
+            "include": ["bin"],
+            "events": {
+                "command.package.start" : "git describe --tags > bin/version.txt",
+                "command.package.end": "chmod +x phpcf.phar"
+            }
+        }
+    }
 }

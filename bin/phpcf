@@ -8,8 +8,9 @@ use wapmorgan\PhpCodeFixer\IssuesBank;
 use wapmorgan\PhpCodeFixer\PhpCodeFixer;
 use wapmorgan\PhpCodeFixer\TerminalInfo;
 
-
+$version = file_exists(__DIR__.'/version.txt') ? trim(file_get_contents(__DIR__.'/version.txt')) : null;
 $doc = <<<DOC
+PhpCodeFixer $version
 Usage: phpcf [--target VERSION] [--max-size SIZE] FILES...
 
 Options:
