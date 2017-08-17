@@ -18,11 +18,14 @@
             "name": "phpcf.phar",
             "output-dir": "./",
             "entry-point": "bin/phpcf",
-            "include": ["bin"],
+            "include": ["bin", "data"],
             "events": {
                 "command.package.start" : "git describe --tags > bin/version.txt",
                 "command.package.end": "chmod +x phpcf.phar"
             }
         }
+    },
+    "scripts": {
+        "build": "phar-builder package composer.json"
     }
 }
