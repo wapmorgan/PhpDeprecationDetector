@@ -6,5 +6,7 @@ assert('false');
 
 read_exif_data();
 
+echo INTL_IDNA_VARIANT_2003;
+
 parse_str('sad=asd', $output);
 parse_str('sad=asd');

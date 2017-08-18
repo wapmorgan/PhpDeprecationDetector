@@ -97,6 +97,16 @@ class PhpCodeFixer {
             }
         }
 
+        // find for deprecated constants
+        $deprecated_constants = $issues->getAll('constants');
+        $used_constants = array_filter_by_column($tokens, T_STRING, 0, true);
+        foreach ($used_constants as $used_constant_i => $used_constant) {
+            if (isset($deprecated_constants[$used_constant[1]])) {
+                $constant = $deprecated_constants[$used_constant[1]];
+                $report->add($constant[1], 'constant', $used_constant[1], ($constant[0] != $used_constant[1] ? $constant[0] : null), $file, $used_constant[2]);
+            }
+        }
+
         // find for deprecated ini settings
         $deprecated_ini_settings = $issues->getAll('ini_settings');
         foreach ($tokens as $i => $token) {
