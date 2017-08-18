@@ -14,14 +14,14 @@ PhpCodeFixer $version
 Usage: phpcf [--target VERSION] [--max-size SIZE] FILES...
 
 Options:
-  -t, --target VERSION  target php version [default: 7.1]
+  -t, --target VERSION  target php version [default: 7.2]
   -s, --max-size SIZE   sets max size of php file. If size of file is above this value, file will be skipped [default: 1mb]
 
 DOC;
 
 $args = Docopt::handle($doc);
 
-$available_versions = array('5.3', '5.4', '5.5', '5.6', '7.0', '7.1');
+$available_versions = array('5.3', '5.4', '5.5', '5.6', '7.0', '7.1', '7.2');
 
 if (!in_array($args['--target'], $available_versions, true)) {
     fwrite(STDERR, 'Target version is not valid.');
