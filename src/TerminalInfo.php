@@ -41,6 +41,6 @@ class TerminalInfo {
     }
 
     static protected function getUnixTerminalSize($param) {
-        return trim(shell_exec('tput '.($param == self::WIDTH ? 'cols' : 'linus')));
+        return trim(shell_exec('tput '.($param == self::WIDTH ? 'cols' : 'lines')));
     }
 }
