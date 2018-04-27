@@ -111,7 +111,10 @@ class PhpCodeFixer {
         foreach ($used_functions as $used_function_i => $used_function) {
             if (isset($deprecated_functions[$used_function[1]])) {
                 // additional check for "(" after this token
-                if (!isset($tokens[$used_function_i+1]) || $tokens[$used_function_i+1] != '(')
+                if (!isset($tokens[$used_function_i+1]) || $tokens[$used_function_i+1] !== '(')
+                    continue;
+                // additional check for lack of "->" before this token
+                if (is_array($tokens[$used_function_i-1]) && $tokens[$used_function_i-1][0] === T_OBJECT_OPERATOR)
                     continue;
                 $function = $deprecated_functions[$used_function[1]];
                 $report->add($function[1], 'function', $used_function[1], ($function[0] != $used_function[1] ? $function[0] : null), $file, $used_function[2]);

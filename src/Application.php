@@ -10,7 +10,7 @@ class Application
     protected $target;
 
     /** @var array */
-    protected $excludeList;
+    protected $excludeList = [];
 
     /** @var IssuesBank */
     protected $issuesBank;
