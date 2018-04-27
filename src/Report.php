@@ -6,14 +6,18 @@ class Report {
     protected $records = [];
 
     /** @var string */
+    protected $title;
+
+    /** @var string */
     protected $removablePath;
 
     /**
      * Report constructor.
      * @param string|null $removablePath
      */
-    public function __construct($removablePath = null)
+    public function __construct($reportTitle, $removablePath = null)
     {
+        $this->title = $reportTitle;
         if ($removablePath !== null)
             $this->removablePath = $removablePath;
     }
@@ -35,7 +39,15 @@ class Report {
     /**
      * @return array
      */
-    public function getReport() {
+    public function getIssues() {
         return $this->records;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTitle()
+    {
+        return $this->title;
     }
 }

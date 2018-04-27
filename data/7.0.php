@@ -1,9 +1,9 @@
 <?php
-return array(
-    'methods_naming' => array(
+return [
+    'methods_naming' => [
         '@php4_constructors',
-    ),
-    'functions' => array(
+    ],
+    'functions' => [
         // MSSQL server
         'mssql_bind',
         'mssql_close',
@@ -71,16 +71,16 @@ return array(
         'imagepsslantfont',
         'imagepstext',
         'ldap_sort'
-    ),
-    'ini_settings' => array(
+    ],
+    'ini_settings' => [
         'always_populate_raw_post_data',
         'asp_tags',
         'xsl.security_prefs',
-    ),
-    'functions_usage' => array(
+    ],
+    'functions_usage' => [
         'password_hash' => '@password_hash_salt_option'
-    ),
-    'identifiers' => array(
+    ],
+    'identifiers' => [
         'bool',
         'int',
         'float',
@@ -92,5 +92,5 @@ return array(
         'object',
         'mixed',
         'numeric',
-    ),
-);
+    ],
+];

@@ -15,7 +15,7 @@ class Application
     /** @var IssuesBank */
     protected $issuesBank;
 
-    /** @var array */
+    /** @var Report[] */
     protected $reports;
 
     /** @var boolean */
@@ -101,9 +101,11 @@ class Application
         $this->reports = [];
         foreach ($this->args['FILES'] as $file) {
             if (is_dir($file)) {
+                $report =
                 $this->reports[] = PhpCodeFixer::checkDir(rtrim(realpath($file), DIRECTORY_SEPARATOR), $this->issuesBank, $this->excludeList);
             } else {
-                $this->reports[] = PhpCodeFixer::checkFile(realpath($file), $this->issuesBank);
+                $report = new Report('File '.basename($file), dirname(realpath($file)));
+                $this->reports[] = PhpCodeFixer::checkFile(realpath($file), $this->issuesBank, $report);
             }
         }
     }
@@ -121,62 +123,77 @@ class Application
 
         $variable_length = max(30, floor(($width - 31) * 0.4));
         $this->hasIssue = false;
+
         if (!empty($this->reports)) {
+            $total_issues = 0;
             $replace_suggestions = array();
-            echo sprintf(' %3s | %-'.$variable_length.'s | %16s | %s', 'PHP','File:Line', 'Type',  'Issue').PHP_EOL;
+
             foreach ($this->reports as $report) {
-                $report = $report->getReport();
-                $versions = array_keys($report);
-                sort($versions);
+                echo PHP_EOL;
+                TerminalInfo::echoWithColor($report->getTitle().PHP_EOL, TerminalInfo::WHITE_TEXT);
 
-                // print issues by version
-                foreach ($versions as $version) {
-                    $issues = $report[$version];
+                $report = $report->getIssues();
+                if (!empty($report)) {
+                    echo sprintf(' %3s | %-' . $variable_length . 's | %16s | %s', 'PHP', 'File:Line', 'Type', 'Issue') . PHP_EOL;
+                    $versions = array_keys($report);
+                    sort($versions);
 
-                    // iterate issues
-                    foreach ($issues as $issue) {
-                        $this->hasIssue = true;
+                    // print issues by version
+                    foreach ($versions as $version) {
+                        $issues = $report[$version];
 
-                        switch ($issue[0]) {
-                            case 'function':
-                            case 'function_usage':
-                                $color = TerminalInfo::YELLOW_TEXT;
-                                break;
+                        // iterate issues
+                        foreach ($issues as $issue) {
+                            $this->hasIssue = true;
+                            $total_issues++;
 
-                            case 'variable':
-                                $color = TerminalInfo::RED_TEXT;
-                                break;
+                            switch ($issue[0]) {
+                                case 'function':
+                                case 'function_usage':
+                                    $color = TerminalInfo::YELLOW_TEXT;
+                                    break;
 
-                            case 'ini':
-                                $color = TerminalInfo::GREEN_TEXT;
-                                break;
+                                case 'variable':
+                                    $color = TerminalInfo::RED_TEXT;
+                                    break;
 
-                            case 'identifier':
-                                $color = TerminalInfo::BLUE_TEXT;
-                                break;
+                                case 'ini':
+                                    $color = TerminalInfo::GREEN_TEXT;
+                                    break;
 
-                            default:
-                                $color = TerminalInfo::YELLOW_TEXT;
-                                break;
-                        }
+                                case 'identifier':
+                                    $color = TerminalInfo::BLUE_TEXT;
+                                    break;
 
-                        echo sprintf(' %3s | %-'.($variable_length + (TerminalInfo::isColorsCapable() ? 22 : 0)).'s | %-16s | %s',
-                                $version,
-                                $this->truncateString(
-                                    TerminalInfo::colorize($issue[3], TerminalInfo::WHITE_TEXT)
-                                    .':'.
-                                    TerminalInfo::colorize($issue[4], TerminalInfo::GRAY_TEXT), $variable_length),
-                                $issue[0],
-                                str_replace('_', ' ', ucfirst($issue[0])).' '.TerminalInfo::colorize($issue[1], $color)
-                                    .($issue[0] == 'function' ? '()' : null).' is '
-                                    .($issue[0] == 'identifier' ? 'reserved by PHP core' : 'deprecated').'. ').PHP_EOL;
+                                default:
+                                    $color = TerminalInfo::YELLOW_TEXT;
+                                    break;
+                            }
 
-                        if (!empty($issue[2])) {
-                            $replace_suggestions[$issue[0]][$issue[1]] = $issue[2];
+                            echo sprintf(' %3s | %-' . ($variable_length + (TerminalInfo::isColorsCapable() ? 22 : 0)) . 's | %-16s | %s',
+                                    $version,
+                                    $this->truncateString(
+                                        TerminalInfo::colorize($issue[3], TerminalInfo::WHITE_TEXT)
+                                        . ':' .
+                                        TerminalInfo::colorize($issue[4], TerminalInfo::GRAY_TEXT), $variable_length),
+                                    $issue[0],
+                                    str_replace('_', ' ', ucfirst($issue[0])) . ' ' . TerminalInfo::colorize($issue[1], $color)
+                                    . ($issue[0] == 'function' ? '()' : null) . ' is '
+                                    . ($issue[0] == 'identifier' ? 'reserved by PHP core' : 'deprecated') . '. ') . PHP_EOL;
+
+                            if (!empty($issue[2])) {
+                                $replace_suggestions[$issue[0]][$issue[1]] = $issue[2];
+                            }
                         }
                     }
                 }
             }
+
+            echo PHP_EOL;
+            if ($total_issues > 0)
+                TerminalInfo::echoWithColor(TerminalInfo::colorize('Total problems: '.$total_issues, TerminalInfo::RED_BACKGROUND).PHP_EOL, TerminalInfo::WHITE_TEXT);
+            else
+                TerminalInfo::echoWithColor(TerminalInfo::colorize('Analyzer has not detected any problems in your code.', TerminalInfo::GREEN_BACKGROUND).PHP_EOL, TerminalInfo::WHITE_TEXT);
 
             if (!empty($replace_suggestions)) {
                 echo PHP_EOL;

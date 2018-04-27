@@ -14,6 +14,9 @@ class TerminalInfo {
     const RED_UNDERLINED_TEXT = "\e[4;31m";
     const GREEN_UNDERLINED_TEXT = "\e[4;32m";
 
+    const RED_BACKGROUND = "\e[41m";
+    const GREEN_BACKGROUND = "\e[42m";
+
     /** @var array Size of terminal */
     static protected $size;
 
@@ -54,12 +57,13 @@ class TerminalInfo {
     }
 
     /**
-     * @param $text
-     * @param $color
+     * @param string $text
+     * @param string $color
+     * @param string|null $backgroundColor
      */
-    static public function echoWithColor($text, $color) {
+    static public function echoWithColor($text, $color, $backgroundColor = null) {
         if (static::isColorsCapable())
-            fwrite(STDOUT, $color.$text.self::RESET_COLOR);
+            fwrite(STDOUT, $backgroundColor . $color . $text . self::RESET_COLOR);
         else
             fwrite(STDOUT, $text);
     }

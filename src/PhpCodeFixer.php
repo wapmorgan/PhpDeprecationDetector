@@ -60,7 +60,7 @@ class PhpCodeFixer {
      */
     static public function checkDir($dir, IssuesBank $issues, array $excludeNamesList = []) {
         TerminalInfo::echoWithColor('Scanning '.$dir.' ...'.PHP_EOL, TerminalInfo::GRAY_TEXT);
-        $report = new Report($dir);
+        $report = new Report('Folder '.$dir, $dir);
         self::checkDirInternal($dir, $issues, $report, $excludeNamesList);
         return $report;
     }
@@ -78,7 +78,7 @@ class PhpCodeFixer {
                     TerminalInfo::echoWithColor('Folder '.$file.' skipped'.PHP_EOL, TerminalInfo::GRAY_TEXT);
                 else
                     self::checkDirInternal($file, $issues, $report, $excludedNames);
-            } else if (is_file($file) && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), array('php', 'php5', 'phtml'))) {
+            } else if (is_file($file) && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), ['php', 'php5', 'phtml'])) {
                 self::checkFile($file, $issues, $report);
             }
         }
@@ -113,9 +113,15 @@ class PhpCodeFixer {
                 // additional check for "(" after this token
                 if (!isset($tokens[$used_function_i+1]) || $tokens[$used_function_i+1] !== '(')
                     continue;
-                // additional check for lack of "->" before this token
-                if (is_array($tokens[$used_function_i-1]) && $tokens[$used_function_i-1][0] === T_OBJECT_OPERATOR)
+                // additional check for lack of "->" and "::" before this token
+                if (isset($tokens[$used_function_i-1])
+                    && is_array($tokens[$used_function_i-1])
+                    && in_array($tokens[$used_function_i-1][0], [T_OBJECT_OPERATOR, T_DOUBLE_COLON], true))
                     continue;
+                // additional check for lack of "function" before this token
+                if (isset($tokens[$used_function_i-2]) && is_array($tokens[$used_function_i-2]) && $tokens[$used_function_i-2][0] === T_FUNCTION)
+                    continue;
+
                 $function = $deprecated_functions[$used_function[1]];
                 $report->add($function[1], 'function', $used_function[1], ($function[0] != $used_function[1] ? $function[0] : null), $file, $used_function[2]);
             }
@@ -134,7 +140,7 @@ class PhpCodeFixer {
         // find for deprecated ini settings
         $deprecated_ini_settings = $issues->getAll('ini_settings');
         foreach ($tokens as $i => $token) {
-            if ($token[0] == T_STRING && in_array($token[1], array('ini_alter', 'ini_set', 'ini_​get', 'ini_restore'))) {
+            if ($token[0] == T_STRING && in_array($token[1], array('ini_alter', 'ini_set', 'ini_get', 'ini_restore'))) {
                 // syntax structure check
                 if ($tokens[$i+1] == '(' && is_array($tokens[$i+2]) && $tokens[$i+2][0] == T_CONSTANT_ENCAPSED_STRING) {
                     $ini_setting = $tokens[$i+2]; // ('ini_setting'
@@ -149,29 +155,59 @@ class PhpCodeFixer {
 
         // find for deprecated functions usage
         $deprecated_functions_usage = $issues->getAll('functions_usage');
+
+        /** @var array $global_deprecated_usage_checkers List of global checkers (for all function calls) */
+        $global_deprecated_usage_checkers = [];
+        foreach ($deprecated_functions_usage as $function => $function_usage_checker) {
+            if (is_int($function)) {
+                $global_deprecated_usage_checkers[] = $function_usage_checker;
+                unset($deprecated_functions_usage[$function]);
+            }
+        }
+
         foreach ($tokens as $i => $token) {
-            if ($token[0] != T_STRING)
+            if ($token[0] != T_STRING
+                || (isset($tokens[$i - 2]) && is_array($tokens[$i - 2]) && in_array($tokens[$i - 2][0], [T_FUNCTION], true))
+                || !isset($tokens[$i + 1])
+                || $tokens[$i + 1] !== '(')
                 continue;
-            if (!isset($deprecated_functions_usage[$token[1]]))
+
+            if (!isset($deprecated_functions_usage[$token[1]]) && empty($global_deprecated_usage_checkers))
                 continue;
+
             // get func arguments
-            $function = array($token);
+            $functionTokens = [$token];
             $k = $i+2;
             $braces = 1;
             while ($braces > 0 && isset($tokens[$k])) {
-                $function[] = $tokens[$k];
+                if (count($functionTokens) > 1 || $tokens[$k] !== ')') $functionTokens[] = $tokens[$k];
                 if ($tokens[$k] == ')') {/*var_dump($tokens[$k]);*/ $braces--;}
                 else if ($tokens[$k] == '(') {/*var_dump($tokens[$k]);*/ $braces++; }
                 // var_dump($braces);
                 $k++;
             }
             //$function[] = $tokens[$k];
-            $fixer = ltrim($deprecated_functions_usage[$token[1]][0], '@');
-            require_once dirname(dirname(__FILE__)).'/data/'.$fixer.'.php';
-            $fixer = __NAMESPACE__.'\\'.$fixer;
-            $result = $fixer($function);
-            if ($result) {
-                $report->add($deprecated_functions_usage[$token[1]][1], 'function_usage', $token[1].' ('.$deprecated_functions_usage[$token[1]][0].')', null, $file, $token[2]);
+
+            // checking exactly this function usage
+            if (isset($deprecated_functions_usage[$token[1]])) {
+                $result = self::callFunctionUsageChecker(ltrim($deprecated_functions_usage[$token[1]][0], '@'),
+                    $token[1],
+                    $functionTokens);
+                if ($result) {
+                    $report->add($deprecated_functions_usage[$token[1]][1], 'function_usage', $token[1] . ' (' . $deprecated_functions_usage[$token[1]][0] . ')', null, $file, $token[2]);
+                }
+            }
+
+            // checking global function usages
+            if (!empty($global_deprecated_usage_checkers)) {
+                foreach ($global_deprecated_usage_checkers as $global_function_usage_checker) {
+                    $result = self::callFunctionUsageChecker(ltrim($global_function_usage_checker[0], '@'),
+                        $token[1],
+                        $functionTokens);
+                    if ($result) {
+                        $report->add($global_function_usage_checker[1], 'function_usage', $token[1] . ' (' . $global_function_usage_checker[0] . ')', null, $file, $token[2]);
+                    }
+                }
             }
         }
 
@@ -244,10 +280,16 @@ class PhpCodeFixer {
         return $report;
     }
 
-    static public function makeFunctionCallTree(array $tokens) {
-        $tree = array();
+    /**
+     * Creates a tokens hierarchy by () from plain list
+     * @param array $tokens
+     * @return array
+     */
+    static public function makeFunctionCallTree(array $tokens, $d = false) {
+        $tree = [];
         $braces = 0;
         $i = 1;
+
         while (/*$braces > 0 &&*/ isset($tokens[$i])) {
             if ($tokens[$i] == '(') $braces++;
             else if ($tokens[$i] == ')') $braces--;
@@ -257,8 +299,13 @@ class PhpCodeFixer {
         return $tree;
     }
 
-    static public function delimByComma(array $tokens) {
-        $delimited = array();
+    /**
+     * Divide first level of tokens hierarchy by comma
+     * @param array $tokens
+     * @return array
+     */
+    static public function divideByComma(array $tokens) {
+        $delimited = [];
         $comma = 0;
         foreach ($tokens as $token) {
             if ($token == ',') $comma++;
@@ -267,8 +314,13 @@ class PhpCodeFixer {
         return $delimited;
     }
 
+    /**
+     * Removes all T_WHITESPACE tokens from tokens hierarchy
+     * @param array $tokens
+     * @return array
+     */
     static public function trimSpaces(array $tokens) {
-        $trimmed = array();
+        $trimmed = [];
         foreach ($tokens as $token) {
             if (is_array($token)) {
                 if ($token[0] == T_WHITESPACE)
@@ -280,5 +332,19 @@ class PhpCodeFixer {
                 $trimmed[] = $token;
         }
         return $trimmed;
+    }
+
+    /**
+     * @param string $checker
+     * @param string $functionName
+     * @param array $callTokens
+     * @return boolean
+     */
+    protected static function callFunctionUsageChecker($checker, $functionName, array $callTokens)
+    {
+        require_once dirname(dirname(__FILE__)).'/data/'.$checker.'.php';
+        $checker = __NAMESPACE__ . '\\' . $checker;
+        $result = $checker($callTokens, $functionName);
+        return $result;
     }
 }

@@ -3,7 +3,7 @@ namespace wapmorgan\PhpCodeFixer;
 
 function preg_replace_e_modifier(array $usage_tokens) {
     $tree = PhpCodeFixer::makeFunctionCallTree($usage_tokens);
-    $data = PhpCodeFixer::delimByComma($tree[0]);
+    $data = PhpCodeFixer::divideByComma($tree[0]);
     $data = PhpCodeFixer::trimSpaces($data[0]);
 
     // getting delimiter

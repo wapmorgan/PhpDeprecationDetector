@@ -6,7 +6,7 @@ function password_hash_salt_option(array $usage_tokens) {
     // if no extra options passed
     if (!isset($tree[1]))
         return false;
-    $data = PhpCodeFixer::delimByComma($tree[1]);
+    $data = PhpCodeFixer::divideByComma($tree[1]);
     $data = PhpCodeFixer::trimSpaces($data);
 
     // searching for 'salt' option

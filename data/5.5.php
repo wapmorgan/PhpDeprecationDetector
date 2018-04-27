@@ -1,6 +1,6 @@
 <?php
-return array(
-    'functions' => array(
+return [
+    'functions' => [
         'mcrypt_cbc' => 'mcrypt_decrypt',
         'mcrypt_cfb' => 'mcrypt_decrypt',
         'mcrypt_ecb' => 'mcrypt_decrypt',
@@ -54,8 +54,8 @@ return array(
         'mysql_tablename',
         'mysql_thread_id',
         'mysql_unbuffered_query'
-    ),
-    'functions_usage' => array(
+    ],
+    'functions_usage' => [
         'preg_replace' => '@preg_replace_e_modifier',
-    ),
-);
+    ],
+];
