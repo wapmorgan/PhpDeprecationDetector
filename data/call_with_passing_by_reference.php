@@ -17,8 +17,10 @@ function call_with_passing_by_reference(array $usage_tokens, $function) {
     $data = PhpCodeFixer::trimSpaces($data);
 
     foreach ($data as $argI => $arg) {
-        if (isset($arg[0]) && $arg[0] === '&')
+        if (isset($arg[0]) && $arg[0] === '&'
+            && isset($data[$argI + 1]) && is_array($data[$argI + 1]) && $data[$argI + 1][0] === T_VARIABLE) {
             return true;
+        }
     }
 
     return false;
