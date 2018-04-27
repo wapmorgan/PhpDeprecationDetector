@@ -1,9 +1,10 @@
 {
     "name": "wapmorgan/php-code-fixer",
-    "description": "A program that finds usage of deprecated functions, variables and ini directives in your php code.",
+    "description": "A scanner that checks compatibility of your code with new interpreter versions.",
     "type": "package",
     "license": "BSD-3-Clause",
     "require": {
+        "php": "^5.4",
         "docopt/docopt": "~1.0"
     },
     "autoload": {

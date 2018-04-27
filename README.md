@@ -1,17 +1,20 @@
 # PhpCodeFixer
+
+PhpCodeFixer - a scanner that checks compatibility of your code with new interpreter versions.
+
 [![Composer package](http://composer.network/badge/wapmorgan/php-code-fixer)](https://packagist.org/packages/wapmorgan/php-code-fixer) [![Latest Stable Version](https://poser.pugx.org/wapmorgan/php-code-fixer/v/stable)](https://packagist.org/packages/wapmorgan/php-code-fixer) [![Total Downloads](https://poser.pugx.org/wapmorgan/php-code-fixer/downloads)](https://packagist.org/packages/wapmorgan/php-code-fixer) [![License](https://poser.pugx.org/wapmorgan/php-code-fixer/license)](https://packagist.org/packages/wapmorgan/php-code-fixer)
 
-PhpCodeFixer finds deprecated functions, wrong functions usage, variables, ini directives and restricted identifiers in your php code. It literally helps you fix code that can fail after migration to PHP 7.
+PhpCodeFixer finds usage of deprecated functions / variables / ini-directives / constants, usage of functions with changed behavior and usage of reserved identifiers in your php code. It literally helps you fix code that can fail after migration to newer PHP version.
 
 1. [Usage](#usage)
 2. [Example](#example)
 3. [Installation](#installation)
 
 # Usage
-To scan your files or folder launch `phpcf` and pass file or directory names.
+To scan your files or folder launch `bin/phpcf` and pass file or directory names.
 
 ```
-Usage: phpcf [--target VERSION] [--max-size SIZE] [--exclude NAME] FILES...
+Usage: bin/phpcf [--target VERSION] [--max-size SIZE] [--exclude NAME] FILES...
 
 Options:
   -t, --target VERSION Sets target php version [default: 7.2]
@@ -33,7 +36,7 @@ By providing additional parameter `--target` you can specify version of PHP to p
 
 # Example of usage
 ```
-> phpcf tests
+> bin/phpcf tests
 Max file size set to: 1.000 MiB
 Scanning tests ...
  PHP |             Type |                          File:Line | Issue
