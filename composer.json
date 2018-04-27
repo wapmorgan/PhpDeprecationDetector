@@ -21,7 +21,7 @@
             "include": ["bin", "data"],
             "events": {
                 "command.package.start" : "git describe --tags > bin/version.txt",
-                "command.package.end": "chmod +x phpcf.phar"
+                "command.package.end": "chmod +x phpcf.phar && rm bin/version.txt"
             }
         }
     },

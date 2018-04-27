@@ -2,8 +2,27 @@
 namespace wapmorgan\PhpCodeFixer;
 
 class TerminalInfo {
-    const WIDTH = 1;
-    const HEIGHT = 2;
+    const RESET_COLOR = "\e[0m";
+    const ORANGE_TEXT = "\e[0;33m";
+    const YELLOW_TEXT = "\e[0;93m";
+    const GRAY_TEXT = "\e[0;37m";
+    const RED_TEXT = "\e[0;31m";
+    const GREEN_TEXT = "\e[0;32m";
+    const BLUE_TEXT = "\e[0;34m";
+    const WHITE_TEXT = "\e[1;97m";
+
+    const RED_UNDERLINED_TEXT = "\e[4;31m";
+    const GREEN_UNDERLINED_TEXT = "\e[4;32m";
+
+    /** @var array Size of terminal */
+    static protected $size;
+
+    /** @var boolean Cached value of terminal colors ability */
+    static protected $colorsCapability;
+
+    /**
+     * @return bool
+     */
     static public function isInteractive() {
         if (strncasecmp(PHP_OS, 'win', 3) === 0) {
             // windows has no test for that
@@ -18,29 +37,97 @@ class TerminalInfo {
         }
     }
 
+    /**
+     * @return bool
+     */
+    static public function isColorsCapable()
+    {
+        if (self::$colorsCapability === null) {
+            if (!static::isUnixPlatform())
+                self::$colorsCapability = false;
+            else if (!static::isInteractive() || strlen(trim(static::exec('which tput'))) === 0)
+                self::$colorsCapability = false;
+            else
+                self::$colorsCapability = (int)trim(static::exec('tput colors')) > 0;
+        }
+        return self::$colorsCapability;
+    }
+
+    /**
+     * @param $text
+     * @param $color
+     */
+    static public function echoWithColor($text, $color) {
+        if (static::isColorsCapable())
+            fwrite(STDOUT, $color.$text.self::RESET_COLOR);
+        else
+            fwrite(STDOUT, $text);
+    }
+
+    /**
+     * @param $text
+     * @param $color
+     * @return string
+     */
+    static public function colorize($text, $color) {
+        if (static::isColorsCapable())
+            return $color.$text.self::RESET_COLOR;
+        else
+            return $text;
+    }
+
+    /**
+     * @return int
+     */
     static public function getWidth() {
-        if (strncasecmp(PHP_OS, 'win', 3) === 0) {
-            return self::getWindowsTerminalSize(self::WIDTH);
-        } else {
-            return self::getUnixTerminalSize(self::WIDTH);
-        }
+        if (static::$size === null)
+            static::getSize();
+
+        return static::$size[1];
     }
 
+    /**
+     * @return int
+     */
     static public function getHeight() {
-        if (strncasecmp(PHP_OS, 'win', 3) === 0) {
-            return self::getWindowsTerminalSize(self::HEIGHT);
+        if (static::$size === null)
+            static::getSize();
+
+        return static::$size[0];
+    }
+
+    /**
+     * @return array
+     */
+    static protected function getWindowsTerminalSize() {
+        $output = explode("\n", self::exec('mode'));
+        return array_map(function($val) { list(, $val) = explode(':', $val); return trim($val); },  [$output[3], $output[4]]);
+    }
+
+    /**
+     * @return array
+     */
+    static protected function getUnixTerminalSize() {
+        $out = self::exec('stty size');
+        return array_map('trim', explode(' ', $out));
+    }
+
+    static protected function exec($cmd)
+    {
+        return shell_exec($cmd);
+    }
+
+    static protected function getSize()
+    {
+        if (static::isUnixPlatform()) {
+            static::$size = static::getUnixTerminalSize();
         } else {
-            return self::getUnixTerminalSize(self::HEIGHT);
+            static::$size = static::getWindowsTerminalSize();
         }
     }
 
-    static protected function getWindowsTerminalSize($param) {
-        $output = explode("\n", shell_exec('mode'));
-        $line = explode(':', trim($param == self::WIDTH ? $output[4] : $output[3]));
-        return trim($line[1]);
-    }
-
-    static protected function getUnixTerminalSize($param) {
-        return trim(shell_exec('tput '.($param == self::WIDTH ? 'cols' : 'lines')));
+    static protected function isUnixPlatform()
+    {
+        return (strncasecmp(PHP_OS, 'win', 3) !== 0);
     }
 }

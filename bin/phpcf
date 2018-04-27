@@ -1,161 +1,42 @@
 #!/usr/bin/env php
 <?php
-// ? create-project installation : require installation
-$vendor_dir = is_dir(dirname(dirname((__FILE__))).'/vendor') ? dirname(dirname((__FILE__))).'/vendor' : dirname(dirname(dirname(dirname(__FILE__))));
-require $vendor_dir.'/autoload.php';
 
+use wapmorgan\PhpCodeFixer\Application;
+use wapmorgan\PhpCodeFixer\TerminalInfo;
 use wapmorgan\PhpCodeFixer\IssuesBank;
 use wapmorgan\PhpCodeFixer\PhpCodeFixer;
-use wapmorgan\PhpCodeFixer\TerminalInfo;
+
+function init_composer($rootDir) {
+    static $paths = [
+        // as a root package or phar
+        '/../vendor/autoload.php',
+        // as a dependency from bin
+        '/../autoload.php',
+        // as a dependency from package folder
+        '/../../../autoload.php',
+    ];
+
+    foreach ($paths as $path) {
+        if (file_exists($rootDir.$path)) {
+            require_once $rootDir.$path;
+            return true;
+        }
+    }
+    return false;
+}
+if (!init_composer(__DIR__)) die('Run `composer install` firstly.'.PHP_EOL);
 
 $version = file_exists(__DIR__.'/version.txt') ? trim(file_get_contents(__DIR__.'/version.txt')) : null;
 $doc = <<<DOC
 PhpCodeFixer $version
-Usage: phpcf [--target VERSION] [--max-size SIZE] FILES...
+Usage: phpcf [--target VERSION] [--max-size SIZE] [--exclude NAME] FILES...
 
 Options:
-  -t, --target VERSION  target php version [default: 7.2]
-  -s, --max-size SIZE   sets max size of php file. If size of file is above this value, file will be skipped [default: 1mb]
+  -t, --target VERSION Sets target php version [default: 7.2]
+  -s, --max-size SIZE Sets max size of php file. If file is larger, it will be skipped [default: 1mb]
+  -e, --exclude NAME Sets excluded file or directory names for scanning. If need to pass few names, join it with comma.
 
 DOC;
 
 $args = Docopt::handle($doc);
-
-$available_versions = array('5.3', '5.4', '5.5', '5.6', '7.0', '7.1', '7.2');
-
-if (!in_array($args['--target'], $available_versions, true)) {
-    fwrite(STDERR, 'Target version is not valid.');
-    exit();
-}
-
-$size_units = array('b', 'kb', 'mb', 'gb');
-if (!empty($args['--max-size'])) {
-    foreach ($size_units as $unit) {
-        if (stripos($args['--max-size'], $unit) > 0) {
-            $max_size_value = (int)stristr($args['--max-size'], $unit, true);
-            $max_size = $max_size_value * pow(1024, array_search($unit, $size_units));
-        }
-    }
-    if (isset($max_size)) {
-        echo 'Max file size set to: '.size_format('%.3F Ui', $max_size).PHP_EOL;
-        PhpCodeFixer::$fileSizeLimit = $max_size;
-    }
-}
-
-// init issues bank
-$issues = new IssuesBank();
-foreach ($available_versions as $version) {
-    $version_issues = include dirname(dirname(__FILE__)).'/data/'.$version.'.php';
-
-    foreach ($version_issues as $issues_type => $issues_list) {
-        $issues->import($version, $issues_type, $issues_list);
-    }
-
-    if ($version == $args['--target'])
-        break;
-}
-
-$reports = array();
-
-foreach ($args['FILES'] as $file) {
-    if (is_dir($file)) {
-        $reports[] = PhpCodeFixer::checkDir(trim($file, DIRECTORY_SEPARATOR), $issues);
-    } else {
-        $reports[] = PhpCodeFixer::checkFile($file, $issues);
-    }
-}
-
-if (TerminalInfo::isInteractive()) {
-    $width = TerminalInfo::getWidth();
-} else {
-    $width = 80;
-}
-
-$variable_length = max(30, floor(($width - 31) * 0.4));
-$has_issue = false;
-if (!empty($reports)) {
-    $replace_suggestions = array();
-    echo sprintf(' %3s | %16s | %'.$variable_length.'s | %s', 'PHP', 'Type', 'File:Line', 'Issue').PHP_EOL;
-    foreach ($reports as $report) {
-        $report = $report->getReport();
-        $versions = array_keys($report);
-        sort($versions);
-        foreach ($versions as $version) {
-            $issues = $report[$version];
-            foreach ($issues as $issue) {
-                $has_issue = true;
-                echo sprintf(' %3s | %-16s | %'.$variable_length.'s | %s', $version, $issue[0], substrIfLonger($issue[3].':'.$issue[4], $variable_length), str_replace('_', ' ', ucfirst($issue[0])).' '.$issue[1].($issue[0] == 'function' ? '()' : null).' is '.($issue[0] == 'identifier' ? 'reserved by PHP core' : 'deprecated').'. ').PHP_EOL;
-                if (!empty($issue[2])) {
-                    $replace_suggestions[$issue[0]][$issue[1]] = $issue[2];
-                }
-            }
-        }
-    }
-
-    if (!empty($replace_suggestions)) {
-        echo PHP_EOL;
-        echo 'Replace Suggestions:'.PHP_EOL;
-        $i = 1;
-        foreach ($replace_suggestions as $type => $suggestion) {
-            foreach ($suggestion as $issue => $replacement) {
-                echo ($i++).'. Don\'t use '.$type.' '.$issue.'. Instead use '.$replacement.PHP_EOL;
-            }
-        }
-    }
-}
-
-/**
- * @param string format Sets format for size.
- * Format should containt string parseable by sprintf function and contain one %F macro that will be replaced by size. Another macro is U/u. It will be replaced with used unit. U for uppercase, u - lowercase. If 'i' is present at the end of format string, size multiplier will be set to 1024 (and units be KiB, MiB and so on), otherwise multiplier is set to 1000.
- * @example "%.0F Ui" 617 KiB
- * @example "%.3F Ui" 617.070 KiB
- * @example "%10.3F Ui"     616.85 KiB
- * @example "%.3F U" 632.096 KB
- *
- * @param integer $bytes Size in bytes
- * @param string $unit Sets default unit. Can have these values: B, KB, MG, GB, TB, PB, EB, ZB and YB
- */
-function size_format($format, $bytes, $unit = null) {
-    $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
-    $bytes = max($bytes, 0);
-    $unit = strtoupper($unit);
-
-    if (substr($format, -1) === 'i') {
-        $multiplier = 1024;
-        $format = substr($format, 0, -1);
-    }
-    else
-        $multiplier = 1000;
-
-    if ($unit === null || !in_array($unit, $units)) {
-        $pow = floor(($bytes ? log($bytes) : 0) / log($multiplier));
-        $pow = min($pow, count($units) - 1);
-
-        $bytes /= pow($multiplier, $pow);
-        $unit = $units[$pow];
-    } else {
-        $pow = array_search($unit, $units);
-        $bytes /= pow($multiplier, $pow);
-    }
-
-    if ($multiplier == 1024)
-        $unit = (strlen($unit) == 2) ? substr($unit, 0, 1).'iB' : $unit;
-    if (strpos($format, 'u') !== false)
-        $format = str_replace('u', strtolower($unit), $format);
-    else
-        $format = str_replace('U', $unit, $format);
-
-    return sprintf($format, $bytes);
-}
-
-function substrIfLonger($string, $maxLength) {
-    if (strlen($string) > $maxLength)
-        return '...'.substr($string, strlen($string)-$maxLength+3);
-    else
-        return $string;
-}
-
-echo 'Peak memory usage: '.size_format('%.3F U', memory_get_peak_usage(), 'mb').PHP_EOL;
-if ($has_issue) {
-    exit(1);
-}
+(new Application($args))->run();

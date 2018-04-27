@@ -52,26 +52,47 @@ function array_filter_by_column($source, $needle, $column, $preserveIndexes = fa
 class PhpCodeFixer {
     static public $fileSizeLimit;
 
-    static public function checkDir($dir, IssuesBank $issues) {
-        echo 'Scanning '.$dir.' ...'.PHP_EOL;
-        $report = new Report();
-        self::checkDirInternal($dir, $issues, $report);
+    /**
+     * @param $dir
+     * @param IssuesBank $issues
+     * @param array $excludeNamesList
+     * @return Report
+     */
+    static public function checkDir($dir, IssuesBank $issues, array $excludeNamesList = []) {
+        TerminalInfo::echoWithColor('Scanning '.$dir.' ...'.PHP_EOL, TerminalInfo::GRAY_TEXT);
+        $report = new Report($dir);
+        self::checkDirInternal($dir, $issues, $report, $excludeNamesList);
         return $report;
     }
 
-    static protected function checkDirInternal($dir, IssuesBank $issues, Report $report) {
+    /**
+     * @param $dir
+     * @param IssuesBank $issues
+     * @param Report $report
+     * @param array $excludedNames
+     */
+    static protected function checkDirInternal($dir, IssuesBank $issues, Report $report, array $excludedNames) {
         foreach (glob($dir.'/*') as $file) {
-            if (is_dir($file))
-                self::checkDirInternal($file, $issues, $report);
-            else if (is_file($file) && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), array('php', 'php5', 'phtml'))) {
+            if (is_dir($file)) {
+                if (in_array(strtolower(basename($file)), $excludedNames, true))
+                    TerminalInfo::echoWithColor('Folder '.$file.' skipped'.PHP_EOL, TerminalInfo::GRAY_TEXT);
+                else
+                    self::checkDirInternal($file, $issues, $report, $excludedNames);
+            } else if (is_file($file) && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), array('php', 'php5', 'phtml'))) {
                 self::checkFile($file, $issues, $report);
             }
         }
     }
 
+    /**
+     * @param string $file
+     * @param IssuesBank $issues
+     * @param Report|null $report
+     * @return Report
+     */
     static public function checkFile($file, IssuesBank $issues, Report $report = null) {
         if (self::$fileSizeLimit !== null && filesize($file) > self::$fileSizeLimit) {
-            fwrite(STDOUT, 'Skipping file '.$file.' due to file size limit.'.PHP_EOL);
+            TerminalInfo::echoWithColor('Skipping file '.$file.' due to file size limit.'.PHP_EOL, TerminalInfo::GRAY_TEXT);
             return;
         }
         if (empty($report)) $report = new Report();
