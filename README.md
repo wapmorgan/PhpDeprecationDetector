@@ -11,11 +11,12 @@ PhpCodeFixer finds deprecated functions, wrong functions usage, variables, ini d
 To scan your files or folder launch `phpcf` and pass file or directory names.
 
 ```
-Usage: phpcf [--target VERSION] [--max-size SIZE] FILES...
+Usage: phpcf [--target VERSION] [--max-size SIZE] [--exclude NAME] FILES...
 
 Options:
-  -t, --target VERSION  target php version [default: 7.2]
-  -s, --max-size SIZE   sets max size of php file. If size of file is above this value, file will be skipped [default: 1mb]
+  -t, --target VERSION Sets target php version [default: 7.2]
+  -s, --max-size SIZE Sets max size of php file. If file is larger, it will be skipped [default: 1mb]
+  -e, --exclude NAME Sets excluded file or directory names for scanning. If need to pass few names, join it with comma.
 ```
 
 By providing additional parameter `--target` you can specify version of PHP to perform less checks.
