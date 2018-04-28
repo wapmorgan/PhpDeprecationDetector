@@ -194,7 +194,12 @@ class PhpCodeFixer {
                     $token[1],
                     $functionTokens);
                 if ($result) {
-                    $report->add($deprecated_functions_usage[$token[1]][1], 'function_usage', $token[1] . ' (' . $deprecated_functions_usage[$token[1]][0] . ')', null, $file, $token[2]);
+                    $report->add($deprecated_functions_usage[$token[1]][1],
+                        'function_usage',
+                        $token[1] . ' (' . $deprecated_functions_usage[$token[1]][0] . ')',
+                        is_string($result) ? $result : null,
+                        $file,
+                        $token[2]);
                 }
             }
 
@@ -205,7 +210,12 @@ class PhpCodeFixer {
                         $token[1],
                         $functionTokens);
                     if ($result) {
-                        $report->add($global_function_usage_checker[1], 'function_usage', $token[1] . ' (' . $global_function_usage_checker[0] . ')', null, $file, $token[2]);
+                        $report->add($global_function_usage_checker[1],
+                            'function_usage',
+                            $token[1] . ' (' . $global_function_usage_checker[0] . ')',
+                            is_string($result) ? $result : null,
+                            $file,
+                            $token[2]);
                     }
                 }
             }

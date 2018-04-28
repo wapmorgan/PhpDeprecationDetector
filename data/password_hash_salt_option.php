@@ -1,6 +1,11 @@
 <?php
 namespace wapmorgan\PhpCodeFixer;
 
+/**
+ * @test 7.0
+ * @param array $usage_tokens
+ * @return bool
+ */
 function password_hash_salt_option(array $usage_tokens) {
     $tree = PhpCodeFixer::makeFunctionCallTree($usage_tokens);
     // if no extra options passed
@@ -14,7 +19,7 @@ function password_hash_salt_option(array $usage_tokens) {
         if ($array_element[0][0] == T_CONSTANT_ENCAPSED_STRING) {
             $element_key = trim($array_element[0][1], '\'"');
             if ($element_key == 'salt')
-                return true;
+                return '"salt" option is not secure and deprecated now';
         }
     }
 

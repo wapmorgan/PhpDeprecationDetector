@@ -121,12 +121,14 @@ class Application
             $width = 80;
         }
 
+        $current_php = substr(PHP_VERSION, 0, 3);
+
         $variable_length = max(30, floor(($width - 31) * 0.4));
         $this->hasIssue = false;
 
         if (!empty($this->reports)) {
             $total_issues = 0;
-            $replace_suggestions = array();
+            $replace_suggestions = $notes = [];
 
             foreach ($this->reports as $report) {
                 echo PHP_EOL;
@@ -165,24 +167,31 @@ class Application
                                     $color = TerminalInfo::BLUE_TEXT;
                                     break;
 
+                                case 'constant':
+                                    $color = TerminalInfo::GRAY_TEXT;
+                                    break;
+
                                 default:
                                     $color = TerminalInfo::YELLOW_TEXT;
                                     break;
                             }
 
                             echo sprintf(' %3s | %-' . ($variable_length + (TerminalInfo::isColorsCapable() ? 22 : 0)) . 's | %-16s | %s',
-                                    $version,
+                                    strcmp($current_php, $version) >= 0 ? TerminalInfo::colorize($version, TerminalInfo::RED_BACKGROUND) : $version,
                                     $this->truncateString(
                                         TerminalInfo::colorize($issue[3], TerminalInfo::WHITE_TEXT)
                                         . ':' .
                                         TerminalInfo::colorize($issue[4], TerminalInfo::GRAY_TEXT), $variable_length),
                                     $issue[0],
-                                    str_replace('_', ' ', ucfirst($issue[0])) . ' ' . TerminalInfo::colorize($issue[1], $color)
-                                    . ($issue[0] == 'function' ? '()' : null) . ' is '
+                                    str_replace('_', ' ', ucfirst($issue[0])) . ' ' . TerminalInfo::colorize($issue[1].($issue[0] == 'function' ? '()' : null), $color)
+                                    . ' is '
                                     . ($issue[0] == 'identifier' ? 'reserved by PHP core' : 'deprecated') . '. ') . PHP_EOL;
 
                             if (!empty($issue[2])) {
-                                $replace_suggestions[$issue[0]][$issue[1]] = $issue[2];
+                                if ($issue[0] === 'function_usage')
+                                    $notes[$issue[0]][$issue[1]] = $issue[2];
+                                else
+                                    $replace_suggestions[$issue[0]][$issue[1]] = $issue[2];
                             }
                         }
                     }
@@ -201,7 +210,21 @@ class Application
                 $i = 1;
                 foreach ($replace_suggestions as $type => $suggestion) {
                     foreach ($suggestion as $issue => $replacement) {
-                        echo ($i++).'. Don\'t use '.$type.' '.TerminalInfo::colorize($issue, TerminalInfo::RED_UNDERLINED_TEXT).'. Instead use '.$replacement.PHP_EOL;
+                        echo ($i++).'. Don\'t use '.$type.' '
+                            .TerminalInfo::colorize($issue, TerminalInfo::RED_UNDERLINED_TEXT)
+                            .'. Consider replace to '.TerminalInfo::colorize($replacement, TerminalInfo::WHITE_TEXT).PHP_EOL;
+                    }
+                }
+            }
+
+            if (!empty($notes)) {
+                echo PHP_EOL;
+                TerminalInfo::echoWithColor('Notes:'.PHP_EOL, TerminalInfo::WHITE_TEXT);
+                $i = 1;
+                foreach ($notes as $type => $note) {
+                    foreach ($note as $issue => $issue_note) {
+                        echo ($i++).'. Usage '.TerminalInfo::colorize($issue, TerminalInfo::RED_UNDERLINED_TEXT)
+                            .': '.TerminalInfo::colorize($issue_note, TerminalInfo::WHITE_TEXT).PHP_EOL;
                     }
                 }
             }

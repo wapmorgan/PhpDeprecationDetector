@@ -1,6 +1,11 @@
 <?php
 namespace wapmorgan\PhpCodeFixer;
 
+/**
+ * @test 5.5
+ * @param array $usage_tokens
+ * @return bool
+ */
 function preg_replace_e_modifier(array $usage_tokens) {
     $tree = PhpCodeFixer::makeFunctionCallTree($usage_tokens);
     $data = PhpCodeFixer::divideByComma($tree[0]);
@@ -14,7 +19,7 @@ function preg_replace_e_modifier(array $usage_tokens) {
             $string = trim($data[count($data)-1][1], '\'"');
             if (($modificator = strrchr($string, $delimiter)) !== false) {
                 if (strpos($modificator, 'e') !== false) {
-                    return true;
+                    return 'Usage of "e" modifier in preg_replace is deprecated: "'.$string.'"';
                 } else {
                     return false;
                 }
