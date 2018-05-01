@@ -16,13 +16,13 @@
     "extra": {
         "phar-builder": {
             "compression": "BZip2",
-            "name": "phpcf.phar",
+            "name": "phpcf-dev.phar",
             "output-dir": "./",
             "entry-point": "bin/phpcf",
             "include": ["bin", "data"],
             "events": {
                 "command.package.start" : "git describe --tags > bin/version.txt",
-                "command.package.end": "chmod +x phpcf.phar && rm bin/version.txt"
+                "command.package.end": "cp phpcf-dev.phar phpcf-`cat bin/version.txt`.phar && chmod +x phpcf.phar && rm bin/version.txt"
             }
         }
     },
