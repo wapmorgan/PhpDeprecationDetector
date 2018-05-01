@@ -101,9 +101,8 @@ class Application
         $this->reports = [];
         foreach ($this->args['FILES'] as $file) {
             if (is_dir($file)) {
-                $report =
                 $this->reports[] = PhpCodeFixer::checkDir(rtrim(realpath($file), DIRECTORY_SEPARATOR), $this->issuesBank, $this->excludeList);
-            } else {
+            } else if (is_file($file)) {
                 $report = new Report('File '.basename($file), dirname(realpath($file)));
                 $this->reports[] = PhpCodeFixer::checkFile(realpath($file), $this->issuesBank, $report);
             }

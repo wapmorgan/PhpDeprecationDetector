@@ -1,10 +1,6 @@
 #!/usr/bin/env php
 <?php
-
 use wapmorgan\PhpCodeFixer\Application;
-use wapmorgan\PhpCodeFixer\TerminalInfo;
-use wapmorgan\PhpCodeFixer\IssuesBank;
-use wapmorgan\PhpCodeFixer\PhpCodeFixer;
 
 function init_composer($rootDir) {
     static $paths = [
@@ -26,17 +22,21 @@ function init_composer($rootDir) {
 }
 if (!init_composer(__DIR__)) die('Run `composer install` firstly.'.PHP_EOL);
 
-$version = file_exists(__DIR__.'/version.txt') ? trim(file_get_contents(__DIR__.'/version.txt')) : null;
+$version = file_exists(__DIR__.'/version.txt') ? trim(file_get_contents(__DIR__.'/version.txt')) : 'unversioned';
 $doc = <<<DOC
 PhpCodeFixer $version
-Usage: phpcf [--target VERSION] [--max-size SIZE] [--exclude NAME] FILES...
+
+Usage:
+    phpcf [--target VERSION] [--max-size SIZE] [--exclude NAME] FILES...
+    phpcf --version
 
 Options:
-  -t, --target VERSION Sets target php version [default: 7.2]
-  -s, --max-size SIZE Sets max size of php file. If file is larger, it will be skipped [default: 1mb]
-  -e, --exclude NAME Sets excluded file or directory names for scanning. If need to pass few names, join it with comma.
+  -v --version         Show version.
+  -t --target VERSION  Sets target php version [default: 7.2]
+  -s --max-size SIZE   Sets max size of php file. If file is larger, it will be skipped [default: 1mb]
+  -e --exclude NAME    Sets excluded file or directory names for scanning. If need to pass few names, join it with comma.
 
 DOC;
 
-$args = Docopt::handle($doc);
+$args = Docopt::handle($doc, ['version' => $version]);
 (new Application($args))->run();
