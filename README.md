@@ -85,43 +85,37 @@ Peak memory usage: 4.571 MB
 # Installation
 
 ## Phar
-The recommended way to install _phpcf_ is as phar-package.
 
-1. Just download a phar from [releases page](https://github.com/wapmorgan/PhpCodeFixer/releases)
-2. Make it executable and put it in one of folders listed in your `$PATH`:
-    ```sh
-    chmod +x phpcf.phar
-    sudo mv phpcf.phar /usr/local/bin/phpcf
+1. Just download a phar from [releases page](https://github.com/wapmorgan/PhpCodeFixer/releases) and make executable
+  ```sh
+  chmod +x phpcf-x.x.x.phar
+  ```
+  
+2. a. **Local installation**: use it from current folder:
+    ```php
+    ./phpcf-x.x.x.phar -h
     ```
-
-Further I will use commands for PhpCodeFixer installed as phar or globally with composer, but if you've installed it locally with composer, just replace `phpcf` command with `vendor/bin/phpcf`.
+    
+    b. **Global installation**: move it in to one of folders listed in your `$PATH` and run from any folder:
+    ```sh
+    sudo mv phpcf-x.x.x.phar /usr/local/bin/phpcf
+    phpcf -h
+    ```
 
 ## Composer
 Another way to install _phpcf_ is via composer.
 
-1. If you do not have composer installed, download the [`composer.phar`](https://getcomposer.org/composer.phar) executable or use the installer.
-
+1. Install composer:
   ```sh
   $ curl -sS https://getcomposer.org/installer | php
   ```
 
-2. Run `php composer.phar require wapmorgan/php-code-fixer` or add requirement in composer.json.
-
-  ```json
-  {
-    "require": {
-      "wapmorgan/php-code-fixer": "*"
-    }
-  }
+2. Install phpcf in global composer dir:
+  ```sh
+  ./composer.phar global require wapmorgan/php-code-fixer dev-master
   ```
-
-3. Run `php composer.phar update`
-
-### Global installation
-You can get more profit when _phpcf_ installed globally.
-
-1. If you do not have composer installed, look previous section and install composer on your server.
-
-2. Run `php composer.phar global require wapmorgan/php-code-fixer`
-
-If phpcf installed globally, you can use `phpcf` command inside any directory.
+  
+3. Run from any folder:
+  ```sh
+  phpcf -h
+  ```
