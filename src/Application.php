@@ -210,8 +210,8 @@ class Application
                 foreach ($replace_suggestions as $type => $suggestion) {
                     foreach ($suggestion as $issue => $replacement) {
                         echo ($i++).'. Don\'t use '.$type.' '
-                            .TerminalInfo::colorize($issue, TerminalInfo::RED_UNDERLINED_TEXT)
-                            .'. Consider replace to '.TerminalInfo::colorize($replacement, TerminalInfo::WHITE_TEXT).PHP_EOL;
+                            .TerminalInfo::colorize($issue.($type === 'function' ? '()' : null), TerminalInfo::RED_UNDERLINED_TEXT)
+                            .' => Consider replace to '.TerminalInfo::colorize($replacement.($type === 'function' ? '()' : null), TerminalInfo::GREEN_TEXT).'.'.PHP_EOL;
                     }
                 }
             }
