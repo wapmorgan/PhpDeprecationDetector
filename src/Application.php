@@ -175,12 +175,12 @@ class Application
                                     break;
                             }
 
+                            $line_length = strlen($issue[4]);
+
                             echo sprintf(' %3s | %-' . ($variable_length + (TerminalInfo::isColorsCapable() ? 22 : 0)) . 's | %-16s | %s',
                                     strcmp($current_php, $version) >= 0 ? TerminalInfo::colorize($version, TerminalInfo::RED_BACKGROUND) : $version,
-                                    $this->truncateString(
-                                        TerminalInfo::colorize($issue[3], TerminalInfo::WHITE_TEXT)
-                                        . ':' .
-                                        TerminalInfo::colorize($issue[4], TerminalInfo::GRAY_TEXT), $variable_length),
+                                    TerminalInfo::colorize($this->normalizeAndTruncatePath($issue[3], $variable_length - $line_length - 1), TerminalInfo::WHITE_TEXT)
+                                        .':'.TerminalInfo::colorize($issue[4], TerminalInfo::GRAY_TEXT),
                                     $issue[0],
                                     str_replace('_', ' ', ucfirst($issue[0])) . ' ' . TerminalInfo::colorize($issue[1].($issue[0] == 'function' ? '()' : null), $color)
                                     . ' is '
@@ -240,11 +240,24 @@ class Application
      * @param $maxLength
      * @return string
      */
-    public function truncateString($string, $maxLength) {
-        if (strlen(preg_replace("~\e\[\d\;\d{2}m~", null, $string)) > $maxLength)
-            return '...'.substr($string, strlen($string)-$maxLength+3);
-        else
-            return $string;
+    public function normalizeAndTruncatePath($path, $maxLength) {
+        $truncated = 1;
+        $path_parts = explode('/', str_replace('\\', '/', $path));
+        $total_parts = count($path_parts);
+
+        while (strlen($path) > $maxLength) {
+            if (($truncated + 1) === $total_parts) break;
+            $part_to_modify = $total_parts - 1 - $truncated;
+            $chars_to_truncate = min(strlen($path_parts[$part_to_modify]) - 1, strlen($path) - $maxLength);
+            if ((strlen($path) - $maxLength + 2) < strlen($path_parts[$part_to_modify]))
+                $chars_to_truncate += 2;
+
+            $path_parts[$part_to_modify] = substr($path_parts[$part_to_modify], 0, -$chars_to_truncate).'..';
+            $path = implode('/', $path_parts);
+            $truncated++;
+        }
+
+        return $path;
     }
 
     /**
