@@ -307,7 +307,7 @@ class Application
 
     public function exitWithError($message, $code = 128)
     {
-        fwrite(STDERR, $message);
+        fwrite(STDERR, TerminalInfo::colorize($message, TerminalInfo::RED_BACKGROUND));
         exit($code);
     }
 

@@ -104,7 +104,9 @@ class TerminalInfo {
      * @return array
      */
     static protected function getWindowsTerminalSize() {
-        $output = explode("\n", self::exec('mode'));
+        $output = self::exec('mode', $returnCode);
+        if ($returnCode !== 0)
+            return [25, 80];
         return array_map(function($val) { list(, $val) = explode(':', $val); return trim($val); },  [$output[3], $output[4]]);
     }
 
@@ -112,13 +114,16 @@ class TerminalInfo {
      * @return array
      */
     static protected function getUnixTerminalSize() {
-        $out = self::exec('stty size');
-        return array_map('trim', explode(' ', $out));
+        $out = self::exec('stty size', $returnCode);
+        if ($returnCode !== 0)
+            return [25, 80];
+        return array_map('trim', explode(' ', $out[0]));
     }
 
-    static protected function exec($cmd)
+    static protected function exec($cmd, &$returnCode)
     {
-        return shell_exec($cmd);
+        \exec($cmd, $output, $returnCode);
+        return $output;
     }
 
     static protected function getSize()
