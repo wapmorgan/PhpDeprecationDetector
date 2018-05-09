@@ -3,52 +3,6 @@ namespace wapmorgan\PhpCodeFixer;
 
 if (!defined('T_TRAIT')) define('T_TRAIT', 'trait');
 
-function in_array_column($haystack, $needle, $column, $strict = false) {
-    if ($strict) {
-        foreach ($haystack as $k => $elem) {
-            if ($elem[$column] === $needle)
-                return true;
-        }
-        return false;
-    } else {
-        foreach ($haystack as $k => $elem) {
-            if ($elem[$column] == $needle)
-                return true;
-        }
-        return false;
-    }
-}
-
-function array_search_column($haystack, $needle, $column, $strict = false) {
-    if ($strict) {
-        foreach ($haystack as $k => $elem) {
-            if ($elem[$column] === $needle)
-                return $k;
-        }
-        return false;
-    } else {
-        foreach ($haystack as $k => $elem) {
-            if ($elem[$column] == $needle)
-                return $k;
-        }
-        return false;
-    }
-}
-
-function array_filter_by_column($source, $needle, $column, $preserveIndexes = false) {
-    $filtered = array();
-    if ($preserveIndexes) {
-        foreach ($source as $i => $elem)
-            if ($elem[$column] == $needle)
-                $filtered[$i] = $elem;
-    } else {
-        foreach ($source as $elem)
-            if ($elem[$column] == $needle)
-                $filtered[] = $elem;
-    }
-    return $filtered;
-}
-
 class PhpCodeFixer {
     static public $fileSizeLimit;
 
@@ -196,7 +150,7 @@ class PhpCodeFixer {
                 if ($result) {
                     $report->add($deprecated_functions_usage[$token[1]][1],
                         'function_usage',
-                        $token[1] . ' (' . $deprecated_functions_usage[$token[1]][0] . ')',
+                        $token[1] . '() (' . $deprecated_functions_usage[$token[1]][0] . ')',
                         is_string($result) ? $result : null,
                         $file,
                         $token[2]);
@@ -212,7 +166,7 @@ class PhpCodeFixer {
                     if ($result) {
                         $report->add($global_function_usage_checker[1],
                             'function_usage',
-                            $token[1] . ' (' . $global_function_usage_checker[0] . ')',
+                            $token[1] . '() (' . $global_function_usage_checker[0] . ')',
                             is_string($result) ? $result : null,
                             $file,
                             $token[2]);
@@ -231,11 +185,15 @@ class PhpCodeFixer {
             }
         }
 
+        // oop reserved words
+        $oop_words = [T_CLASS, T_INTERFACE];
+        if (defined('T_TRAIT')) $oop_words[] = T_TRAIT;
+
         // find for reserved identifiers used as names
         $identifiers = $issues->getAll('identifiers');
         if (!empty($identifiers)) {
             foreach ($tokens as $i => $token) {
-                if (in_array($token[0], array(T_CLASS, T_INTERFACE, T_TRAIT))) {
+                if (in_array($token[0], $oop_words)) {
                     if (isset($tokens[$i+2]) && is_array($tokens[$i+2]) && $tokens[$i+2][0] == T_STRING) {
                         $used_identifier = $tokens[$i+2];
                         if (isset($identifiers[$used_identifier[1]])) {
@@ -345,6 +303,7 @@ class PhpCodeFixer {
     }
 
     /**
+     * Calls function-usage checker
      * @param string $checker
      * @param string $functionName
      * @param array $callTokens

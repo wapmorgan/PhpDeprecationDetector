@@ -13,7 +13,8 @@ class Report {
 
     /**
      * Report constructor.
-     * @param string|null $removablePath
+     * @param string $reportTitle Title of report
+     * @param string|null $removablePath If present, this part of paths will be removed from added issues
      */
     public function __construct($reportTitle, $removablePath = null)
     {
@@ -23,12 +24,14 @@ class Report {
     }
 
     /**
-     * @param $version
-     * @param $type
-     * @param $text
-     * @param $replacement
-     * @param $file
-     * @param $line
+     * Adds issue to the report
+     * @param string $version PHP version
+     * @param string $type Issue type
+     * @param string $text Issue description
+     * @param string|null $replacement Possible replacement
+     * @param string $file File in which issue present
+     * @param integer $line Line of file
+     * @return void
      */
     public function add($version, $type, $text, $replacement, $file, $line) {
         if ($this->removablePath !== null && strncasecmp($file, $this->removablePath, strlen($this->removablePath)) === 0)
@@ -37,6 +40,7 @@ class Report {
     }
 
     /**
+     * Returns list of all issues
      * @return array
      */
     public function getIssues() {
@@ -44,6 +48,7 @@ class Report {
     }
 
     /**
+     * Returns title of report
      * @return string
      */
     public function getTitle()

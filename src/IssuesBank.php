@@ -6,6 +6,7 @@ class IssuesBank {
     protected $issues = [];
 
     /**
+     * Adds issue to the list
      * @param string $version PHP version
      * @param string $type Type of issues
      * @param array $issues List of issues

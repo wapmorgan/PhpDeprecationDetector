@@ -24,6 +24,7 @@ class TerminalInfo {
     static protected $colorsCapability;
 
     /**
+     * Checks that output is a terminal, not a file|pipe
      * @return bool
      */
     static public function isInteractive() {
@@ -41,6 +42,7 @@ class TerminalInfo {
     }
 
     /**
+     * Checks that terminal supports colors
      * @return bool
      */
     static public function isColorsCapable()
@@ -48,15 +50,23 @@ class TerminalInfo {
         if (self::$colorsCapability === null) {
             if (!static::isUnixPlatform())
                 self::$colorsCapability = false;
-            else if (!static::isInteractive() || strlen(trim(static::exec('which tput'))) === 0)
+            else if (!static::isInteractive())
                 self::$colorsCapability = false;
-            else
-                self::$colorsCapability = (int)trim(static::exec('tput colors')) > 0;
+            else {
+                $tput_presence = static::exec('which tput');
+                if (strlen(trim($tput_presence[0])) === 0)
+                    self::$colorsCapability = false;
+                else {
+                    $tput_colors = static::exec('tput colors');
+                    self::$colorsCapability = (int)$tput_colors[0] > 0;
+                }
+            }
         }
         return self::$colorsCapability;
     }
 
     /**
+     * Outputs text with background/foreground color
      * @param string $text
      * @param string $color
      * @param string|null $backgroundColor
@@ -69,6 +79,7 @@ class TerminalInfo {
     }
 
     /**
+     * Added prefix for color and postfix for color reset
      * @param $text
      * @param $color
      * @return string
@@ -81,6 +92,7 @@ class TerminalInfo {
     }
 
     /**
+     * Returns width (columns) of terminal
      * @return int
      */
     static public function getWidth() {
@@ -91,6 +103,7 @@ class TerminalInfo {
     }
 
     /**
+     * Returns height (rows) of terminal
      * @return int
      */
     static public function getHeight() {
@@ -101,16 +114,27 @@ class TerminalInfo {
     }
 
     /**
+     * Returns size of terminal on Windows
      * @return array
      */
     static protected function getWindowsTerminalSize() {
         $output = self::exec('mode', $returnCode);
         if ($returnCode !== 0)
             return [25, 80];
-        return array_map(function($val) { list(, $val) = explode(':', $val); return trim($val); },  [$output[3], $output[4]]);
+
+        foreach ($output as $i => $line) {
+            if (strpos($line, ' CON') !== false) {
+                $sizes = [$output[$i + 2], $output[$i + 3]];
+            }
+        }
+        if (!isset($sizes))
+            return [25, 80];
+
+        return array_map(function($val) { list(, $val) = explode(':', $val); return trim($val); }, $sizes);
     }
 
     /**
+     * Returns size of terminal on Unix
      * @return array
      */
     static protected function getUnixTerminalSize() {
@@ -120,12 +144,21 @@ class TerminalInfo {
         return array_map('trim', explode(' ', $out[0]));
     }
 
-    static protected function exec($cmd, &$returnCode)
+    /**
+     * Executes system command and returns output
+     * @param string $cmd
+     * @param null|mixed &$returnCode Exit code of command will be stored in this argument
+     * @return array List of output lines
+     */
+    static protected function exec($cmd, &$returnCode = null)
     {
         \exec($cmd, $output, $returnCode);
         return $output;
     }
 
+    /**
+     * Gets size of terminal
+     */
     static protected function getSize()
     {
         if (static::isUnixPlatform()) {
@@ -135,6 +168,10 @@ class TerminalInfo {
         }
     }
 
+    /**
+     * Checks that running platform is unix
+     * @return bool
+     */
     static protected function isUnixPlatform()
     {
         return (strncasecmp(PHP_OS, 'win', 3) !== 0);

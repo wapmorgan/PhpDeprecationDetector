@@ -10,7 +10,8 @@
     "autoload": {
         "psr-4": {
             "wapmorgan\\PhpCodeFixer\\": "src/"
-        }
+        },
+        "files": ["src/functions.php"]
     },
     "bin": ["bin/phpcf"],
     "extra": {

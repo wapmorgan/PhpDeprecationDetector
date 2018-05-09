@@ -44,6 +44,9 @@ class Application
             exit(1);
     }
 
+    /**
+     * Checks --target argument
+     */
     public function checkTarget()
     {
         if (empty($this->args['target']))
@@ -55,6 +58,9 @@ class Application
         return $this->target = $target;
     }
 
+    /**
+     * Checks --max-size argument
+     */
     public function checkMaxSize()
     {
         $size_units = array('b', 'kb', 'mb', 'gb');
@@ -72,6 +78,9 @@ class Application
         }
     }
 
+    /**
+     * Checks --exclude argument
+     */
     protected function checkExcludeList()
     {
         if (!empty($this->args['--exclude'])) {
@@ -80,6 +89,9 @@ class Application
         }
     }
 
+    /**
+     * Loads issues
+     */
     public function initializeIssues()
     {
         // init issues bank
@@ -96,6 +108,9 @@ class Application
         }
     }
 
+    /**
+     * Runs analyzer
+     */
     protected function scanFiles()
     {
         $this->reports = [];
@@ -110,7 +125,7 @@ class Application
     }
 
     /**
-     *
+     * Prints analyzer report
      */
     protected function printReport()
     {
@@ -147,7 +162,6 @@ class Application
                         foreach ($issues as $issue) {
                             $this->hasIssue = true;
                             $total_issues++;
-
                             switch ($issue[0]) {
                                 case 'function':
                                 case 'function_usage':
@@ -187,8 +201,9 @@ class Application
                                     . ($issue[0] == 'identifier' ? 'reserved by PHP core' : 'deprecated') . '. ') . PHP_EOL;
 
                             if (!empty($issue[2])) {
-                                if ($issue[0] === 'function_usage')
+                                if ($issue[0] === 'function_usage') {
                                     $notes[$issue[0]][$issue[1]] = $issue[2];
+                                }
                                 else
                                     $replace_suggestions[$issue[0]][$issue[1]] = $issue[2];
                             }
@@ -230,14 +245,18 @@ class Application
         }
     }
 
+    /**
+     * Prints memory consumption
+     */
     protected function printMemoryUsage()
     {
         $this->echoInfoLine('Peak memory usage: '.$this->formatSize('%.3F U', memory_get_peak_usage(), 'mb'));
     }
 
     /**
-     * @param $string
-     * @param $maxLength
+     * Simplifies path to fit in specific width
+     * @param string $path
+     * @param integer $maxLength
      * @return string
      */
     public function normalizeAndTruncatePath($path, $maxLength) {
@@ -261,8 +280,8 @@ class Application
     }
 
     /**
-     * @param string format Sets format for size.
-     * Format should containt string parseable by sprintf function and contain one %F macro that will be replaced by size. Another macro is U/u. It will be replaced with used unit. U for uppercase, u - lowercase. If 'i' is present at the end of format string, size multiplier will be set to 1024 (and units be KiB, MiB and so on), otherwise multiplier is set to 1000.
+     * @param string $format Sets format for size.
+     * Format should containt string parsable by sprintf() function and contain one %F macro that will be replaced by size. Another macro is U/u. It will be replaced with used unit. U for uppercase, u - lowercase. If 'i' is present at the end of format string, size multiplier will be set to 1024 (and units be KiB, MiB and so on), otherwise multiplier is set to 1000.
      * @example "%.0F Ui" 617 KiB
      * @example "%.3F Ui" 617.070 KiB
      * @example "%10.3F Ui"     616.85 KiB
@@ -305,16 +324,23 @@ class Application
         return sprintf($format, $bytes);
     }
 
+    /**
+     * Shows error and terminates script
+     * @param string $message
+     * @param int $code
+     */
     public function exitWithError($message, $code = 128)
     {
         fwrite(STDERR, TerminalInfo::colorize($message, TerminalInfo::RED_BACKGROUND));
         exit($code);
     }
 
+    /**
+     * Prints information message
+     * @param string $message
+     */
     public function echoInfoLine($message)
     {
         TerminalInfo::echoWithColor($message.PHP_EOL, TerminalInfo::GRAY_TEXT);
     }
-
-
 }
