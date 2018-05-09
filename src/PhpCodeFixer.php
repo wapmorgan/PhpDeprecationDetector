@@ -224,14 +224,21 @@ class PhpCodeFixer {
                             $braces--;
                             /*echo '--';*/
                         } else if (is_array($tokens[$i]) && $tokens[$i][0] == T_FUNCTION && is_array($tokens[$i+2])) {
-                            $function_name = $tokens[$i+2][1];
+							$method_attributes = [];
+							$attributes_index = 2;
+							while (is_array($tokens[$i - $attributes_index])
+								&& in_array($tokens[$i - $attributes_index][1], ['static', 'public', 'private', 'protected'], true)) {
+								$method_attributes[] = $tokens[$i - $attributes_index][1];
+								$attributes_index += 2;
+							}
+                            $method_name = $tokens[$i+2][1];
                             foreach ($methods_naming as $methods_naming_checker) {
                                 $checker = ltrim($methods_naming_checker[0], '@');
                                 require_once dirname(dirname(__FILE__)).'/data/'.$checker.'.php';
                                 $checker = __NAMESPACE__.'\\'.$checker;
-                                $result = $checker($class_name, $function_name);
+                                $result = $checker($class_name, $method_name, $method_attributes);
                                 if ($result) {
-                                    $report->add($methods_naming_checker[1], 'method_name', $function_name.':'.$class_name.' ('.$methods_naming_checker[0].')', null, $file, $tokens[$i][2]);
+                                    $report->add($methods_naming_checker[1], 'method_name', $method_name.':'.$class_name.' ('.$methods_naming_checker[0].')', null, $file, $tokens[$i][2]);
                                 }
 
                             }
