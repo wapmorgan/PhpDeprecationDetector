@@ -125,6 +125,7 @@ class TerminalInfo {
         foreach ($output as $i => $line) {
             if (strpos($line, ' CON') !== false) {
                 $sizes = [$output[$i + 2], $output[$i + 3]];
+                break;
             }
         }
         if (!isset($sizes))
