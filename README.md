@@ -38,32 +38,32 @@ By providing additional parameter `--target` you can specify version of PHP to p
 ```
 > bin/phpcf tests
 Max file size set to: 1.000 MiB
-Scanning /media/wapmorgan/HDD/Документы/PhpCodeFixer/tests ...
+Scanning D:\Документы\PhpCodeFixer\tests ...
 
-Folder /media/wapmorgan/HDD/Документы/PhpCodeFixer/tests
- PHP | File:Line                                            |             Type | Issue
- 5.3 | /5.3.php:2                                           | function         | Function dl() is deprecated. 
- 5.3 | /5.3.php:3                                           | ini              | Ini define_syslog_variables is deprecated. 
- 5.3 | /5.3.php:4                                           | function_usage   | Function usage piet (@call_with_passing_by_reference) is deprecated. 
- 5.4 | /5.4.php:2                                           | function         | Function mcrypt_generic_end() is deprecated. 
- 5.4 | /5.4.php:3                                           | function         | Function magic_quotes_runtime() is deprecated. 
- 5.5 | /5.5.php:2                                           | function_usage   | Function usage preg_replace (@preg_replace_e_modifier) is deprecated. 
- 5.6 | /5.6.php:6                                           | ini              | Ini mbstring.http_output is deprecated. 
- 5.6 | /5.6.php:3                                           | variable         | Variable $HTTP_RAW_POST_DATA is deprecated. 
- 7.0 | /7.0.php:8                                           | function         | Function mssql_connect() is deprecated. 
- 7.0 | /7.0.php:10                                          | ini              | Ini always_populate_raw_post_data is deprecated. 
- 7.0 | /7.0.php:12                                          | function_usage   | Function usage password_hash (@password_hash_salt_option) is deprecated. 
- 7.0 | /7.0.php:14                                          | identifier       | Identifier float is reserved by PHP core. 
- 7.0 | /7.0.php:3                                           | method_name      | Method name test:test (@php4_constructors) is deprecated. 
- 7.1 | /7.1.php:2                                           | function         | Function mcrypt_decrypt() is deprecated. 
- 7.1 | /7.1.php:4                                           | ini              | Ini session.hash_function is deprecated. 
- 7.1 | /7.1.php:9                                           | identifier       | Identifier iterable is reserved by PHP core. 
- 7.2 | /7.2.php:2                                           | function         | Function create_function() is deprecated. 
- 7.2 | /7.2.php:7                                           | function         | Function read_exif_data() is deprecated. 
- 7.2 | /7.2.php:9                                           | constant         | Constant INTL_IDNA_VARIANT_2003 is deprecated. 
- 7.2 | /7.2.php:3                                           | ini              | Ini mbstring.func_overload is deprecated. 
- 7.2 | /7.2.php:5                                           | function_usage   | Function usage assert (@assert_on_string) is deprecated. 
- 7.2 | /7.2.php:12                                          | function_usage   | Function usage parse_str (@parse_str_without_argument) is deprecated. 
+Folder D:\Документы\PhpCodeFixer\tests
+ PHP | File:Line                           |             Type | Issue
+ 5.3 | /5.3.php:2                          | function         | Function dl() is deprecated.
+ 5.3 | /5.3.php:3                          | ini              | Ini define_syslog_variables is deprecated.
+ 5.3 | /5.3.php:4                          | function_usage   | Function usage piet() (@call_with_passing_by_reference) is deprecated.
+ 5.4 | /5.4.php:2                          | function         | Function mcrypt_generic_end() is deprecated.
+ 5.4 | /5.4.php:3                          | function         | Function magic_quotes_runtime() is deprecated.
+ 5.5 | /5.5.php:2                          | function_usage   | Function usage preg_replace() (@preg_replace_e_modifier) is deprecated.
+ 5.6 | /5.6.php:6                          | ini              | Ini mbstring.http_output is deprecated.
+ 5.6 | /5.6.php:3                          | variable         | Variable $HTTP_RAW_POST_DATA is deprecated.
+ 7.0 | /7.0.php:8                          | function         | Function mssql_connect() is deprecated.
+ 7.0 | /7.0.php:10                         | ini              | Ini always_populate_raw_post_data is deprecated.
+ 7.0 | /7.0.php:12                         | function_usage   | Function usage password_hash() (@password_hash_salt_option) is deprecated.
+ 7.0 | /7.0.php:14                         | identifier       | Identifier float is reserved by PHP core.
+ 7.0 | /7.0.php:3                          | method_name      | Method name test:test (@php4_constructors) is deprecated.
+ 7.1 | /7.1.php:2                          | function         | Function mcrypt_decrypt() is deprecated.
+ 7.1 | /7.1.php:4                          | ini              | Ini session.hash_function is deprecated.
+ 7.1 | /7.1.php:9                          | identifier       | Identifier iterable is reserved by PHP core.
+ 7.2 | /7.2.php:2                          | function         | Function create_function() is deprecated.
+ 7.2 | /7.2.php:7                          | function         | Function read_exif_data() is deprecated.
+ 7.2 | /7.2.php:9                          | constant         | Constant INTL_IDNA_VARIANT_2003 is deprecated.
+ 7.2 | /7.2.php:3                          | ini              | Ini mbstring.func_overload is deprecated.
+ 7.2 | /7.2.php:5                          | function_usage   | Function usage assert() (@assert_on_string) is deprecated.
+ 7.2 | /7.2.php:12                         | function_usage   | Function usage parse_str() (@parse_str_without_argument) is deprecated.
 
 Total problems: 22
 
@@ -75,12 +75,12 @@ Replace Suggestions:
 5. Don't use constant INTL_IDNA_VARIANT_2003 => Consider replace to INTL_IDNA_VARIANT_UTS46.
 
 Notes:
-1. Usage piet (@call_with_passing_by_reference): Call with passing by reference is deprecated. Problem is "&$hoho"
-2. Usage preg_replace (@preg_replace_e_modifier): Usage of "e" modifier in preg_replace is deprecated: "asdasdsd~ie"
-3. Usage password_hash (@password_hash_salt_option): "salt" option is not secure and deprecated now
-4. Usage assert (@assert_on_string): You should avoid using string code: "'false'"
-5. Usage parse_str (@parse_str_without_argument): Pass a variable as second argument to parse_str() call
-Peak memory usage: 1.242 MB
+1. Usage piet() (@call_with_passing_by_reference): Call with passing by reference is deprecated. Problem is "&$hoho"
+2. Usage preg_replace() (@preg_replace_e_modifier): Usage of "e" modifier in preg_replace is deprecated: "asdasdsd~ie"
+3. Usage password_hash() (@password_hash_salt_option): "salt" option is not secure and deprecated now
+4. Usage assert() (@assert_on_string): You should avoid using string code: "'false'"
+5. Usage parse_str() (@parse_str_without_argument): Call to parse_str() without second argument is deprecated
+Peak memory usage: 1.135 MB
 ```
 
 # Installation
@@ -91,12 +91,12 @@ Peak memory usage: 1.242 MB
   ```sh
   chmod +x phpcf-x.x.x.phar
   ```
-  
+
 2. a. **Local installation**: use it from current folder:
     ```php
     ./phpcf-x.x.x.phar -h
     ```
-    
+
     b. **Global installation**: move it in to one of folders listed in your `$PATH` and run from any folder:
     ```sh
     sudo mv phpcf-x.x.x.phar /usr/local/bin/phpcf
@@ -115,7 +115,7 @@ Another way to install _phpcf_ is via composer.
   ```sh
   ./composer.phar global require wapmorgan/php-code-fixer dev-master
   ```
-  
+
 3. Run from any folder:
   ```sh
   phpcf -h
