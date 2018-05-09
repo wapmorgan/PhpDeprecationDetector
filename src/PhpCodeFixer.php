@@ -224,13 +224,13 @@ class PhpCodeFixer {
                             $braces--;
                             /*echo '--';*/
                         } else if (is_array($tokens[$i]) && $tokens[$i][0] == T_FUNCTION && is_array($tokens[$i+2])) {
-							$method_attributes = [];
-							$attributes_index = 2;
-							while (is_array($tokens[$i - $attributes_index])
-								&& in_array($tokens[$i - $attributes_index][1], ['static', 'public', 'private', 'protected'], true)) {
-								$method_attributes[] = $tokens[$i - $attributes_index][1];
-								$attributes_index += 2;
-							}
+                            $method_attributes = [];
+                            $attributes_index = 2;
+                            while (is_array($tokens[$i - $attributes_index])
+                                && in_array($tokens[$i - $attributes_index][1], ['static', 'public', 'private', 'protected'], true)) {
+                                $method_attributes[] = $tokens[$i - $attributes_index][1];
+                                $attributes_index += 2;
+                            }
                             $method_name = $tokens[$i+2][1];
                             foreach ($methods_naming as $methods_naming_checker) {
                                 $checker = ltrim($methods_naming_checker[0], '@');
