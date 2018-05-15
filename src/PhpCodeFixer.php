@@ -4,7 +4,11 @@ namespace wapmorgan\PhpCodeFixer;
 if (!defined('T_TRAIT')) define('T_TRAIT', 'trait');
 
 class PhpCodeFixer {
-    const VERSION = '2.0.14-dev';
+
+    /**
+     * Version of scanner
+     */
+    const VERSION = '2.0.14';
 
     /**
      * @var integer Size of file to process. Can be decreased to use less memory or prevent crashes due to memory limit.
