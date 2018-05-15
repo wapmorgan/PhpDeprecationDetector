@@ -11,28 +11,24 @@ PhpCodeFixer finds usage of deprecated functions / variables / ini-directives / 
 3. [Installation](#installation)
 
 # Usage
-To scan your files or folder launch `bin/phpcf` and pass file or directory names.
+To scan your files or folder launch `phpcf` and pass file or directory names.
 
 ```
-Usage: bin/phpcf [--target VERSION] [--max-size SIZE] [--exclude NAME] FILES...
+Usage:
+    phpcf [--target VERSION] [--max-size SIZE] [--exclude NAME] [--file-extensions EXT] FILES...
+    phpcf --version
 
 Options:
-  -t, --target VERSION Sets target php version [default: 7.2]
-  -s, --max-size SIZE Sets max size of php file. If file is larger, it will be skipped [default: 1mb]
-  -e, --exclude NAME Sets excluded file or directory names for scanning. If need to pass few names, join it with comma.
+  -v --version             Show version.
+  -t --target VERSION      Sets target php version. [default: 7.2]
+  -e --exclude NAME        Sets excluded file or directory names for scanning. If need to pass few names, join it with comma.
+  -s --max-size SIZE       Sets max size of php file. If file is larger, it will be skipped. [default: 1mb]
+     --file-extensions EXT Sets file extensions to be parsed. [default: php, phtml, php5]
 ```
 
-By providing additional parameter `--target` you can specify version of PHP to perform less checks.
-
-| Option       | Action                                      |
-|--------------|---------------------------------------------|
-| --target 7.2 | By default. Use all deprecations up to 7.2. |
-| --target 7.1 | Use all deprecations from 5.3 to 7.1.       |
-| --target 7.0 | Use all deprecations from 5.3 to 7.0.       |
-| --target 5.6 | Use all deprecations from 5.3 to 5.6.       |
-| --target 5.5 | Use all deprecations from 5.3 to 5.5.       |
-| --target 5.4 | Use all deprecations from 5.3 to 5.4.       |
-| --target 5.3 | Use deprecations from 5.3 only.             |
+- By providing additional parameter `--target` you can specify version of PHP to perform less checks. Available targets: 5.3, 5.4, 5.5, 5.6, 7.0, 7.1, 7.2. A larger version includes rules for checking from all previous.
+- By providing `--exclude` paramenter you can exclude specific folders or files from analyze. For example, `--exclude vendor` will prevent checking third-party libraries.
+- If your files has unusual extension, you can specify all exts by `--file-extensions` argument. By default, it uses `php`, `phtml` and `php5`.
 
 # Example of usage
 ```
