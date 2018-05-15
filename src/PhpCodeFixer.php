@@ -4,7 +4,17 @@ namespace wapmorgan\PhpCodeFixer;
 if (!defined('T_TRAIT')) define('T_TRAIT', 'trait');
 
 class PhpCodeFixer {
+    const VERSION = '2.0.14-dev';
+
+    /**
+     * @var integer Size of file to process. Can be decreased to use less memory or prevent crashes due to memory limit.
+     */
     static public $fileSizeLimit;
+
+    /**
+     * @var array Extensions of file to process.
+     */
+    static public $fileExtensions = ['php', 'php5', 'phtml'];
 
     /**
      * @param $dir
@@ -32,7 +42,7 @@ class PhpCodeFixer {
                     TerminalInfo::echoWithColor('Folder '.$file.' skipped'.PHP_EOL, TerminalInfo::GRAY_TEXT);
                 else
                     self::checkDirInternal($file, $issues, $report, $excludedNames);
-            } else if (is_file($file) && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), ['php', 'php5', 'phtml'])) {
+            } else if (is_file($file) && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), self::$fileExtensions)) {
                 self::checkFile($file, $issues, $report);
             }
         }

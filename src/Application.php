@@ -12,6 +12,9 @@ class Application
     /** @var array */
     protected $excludeList = [];
 
+    /** @var array */
+    protected $fileExtensions = [];
+
     /** @var IssuesBank */
     protected $issuesBank;
 
@@ -30,11 +33,15 @@ class Application
         $this->args = $args;
     }
 
+    /**
+     * Runs console application
+     */
     public function run()
     {
         $this->checkTarget();
         $this->checkMaxSize();
         $this->checkExcludeList();
+        $this->checkFileExtensions();
 
         $this->initializeIssues();
         $this->scanFiles();
@@ -49,13 +56,13 @@ class Application
      */
     public function checkTarget()
     {
-        if (empty($this->args['target']))
-            $target = $this->available_versions[count($this->available_versions) - 1];
-        else if (!in_array($this->args['target'], $this->available_versions, true)) {
-            $this->exitWithError('Target version is not valid.');
+        if (empty($this->args['--target'])) {
+            return $this->target = $this->available_versions[count($this->available_versions) - 1];
+        } else if (!in_array($this->args['--target'], $this->available_versions, true)) {
+            $this->exitWithError('Target version is not valid. Available target version: '.implode(', ', $this->available_versions));
         }
 
-        return $this->target = $target;
+        return $this->target = $this->args['--target'];
     }
 
     /**
@@ -86,6 +93,20 @@ class Application
         if (!empty($this->args['--exclude'])) {
             $this->excludeList = array_map('strtolower', array_map('trim', explode(',', $this->args['--exclude'])));
             $this->echoInfoLine('Excluding following files / directories: '.implode(', ', $this->excludeList));
+        }
+    }
+
+    /**
+     * Checks --file-extensions argument
+     */
+    protected function checkFileExtensions()
+    {
+        if (!empty($this->args['--file-extensions'])) {
+            $exts = array_map('strtolower', array_map('trim', explode(',', $this->args['--file-extensions'])));
+            if ($exts !== PhpCodeFixer::$fileExtensions) {
+                PhpCodeFixer::$fileExtensions = $exts;
+                $this->echoInfoLine('File extensions set to: '.implode(', ', $exts));
+            }
         }
     }
 
@@ -331,7 +352,7 @@ class Application
      */
     public function exitWithError($message, $code = 128)
     {
-        fwrite(STDERR, TerminalInfo::colorize($message, TerminalInfo::RED_BACKGROUND));
+        fwrite(STDERR, TerminalInfo::colorize($message, TerminalInfo::RED_BACKGROUND).PHP_EOL);
         exit($code);
     }
 

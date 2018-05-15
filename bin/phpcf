@@ -1,6 +1,7 @@
 #!/usr/bin/env php
 <?php
 use wapmorgan\PhpCodeFixer\Application;
+use wapmorgan\PhpCodeFixer\PhpCodeFixer;
 
 function init_composer($rootDir) {
     static $paths = [
@@ -22,19 +23,20 @@ function init_composer($rootDir) {
 }
 if (!init_composer(__DIR__)) die('Run `composer install` firstly.'.PHP_EOL);
 
-$version = file_exists(__DIR__.'/version.txt') ? trim(file_get_contents(__DIR__.'/version.txt')) : 'unversioned';
+$version = file_exists(__DIR__.'/version.txt') ? trim(file_get_contents(__DIR__.'/version.txt')) : PhpCodeFixer::VERSION;
 $doc = <<<DOC
 PhpCodeFixer $version
 
 Usage:
-    phpcf [--target VERSION] [--max-size SIZE] [--exclude NAME] FILES...
+    phpcf [--target VERSION] [--max-size SIZE] [--exclude NAME] [--file-extensions EXT] FILES...
     phpcf --version
 
 Options:
-  -v --version         Show version.
-  -t --target VERSION  Sets target php version [default: 7.2]
-  -s --max-size SIZE   Sets max size of php file. If file is larger, it will be skipped [default: 1mb]
-  -e --exclude NAME    Sets excluded file or directory names for scanning. If need to pass few names, join it with comma.
+  -v --version             Show version.
+  -t --target VERSION      Sets target php version. [default: 7.2]
+  -e --exclude NAME        Sets excluded file or directory names for scanning. If need to pass few names, join it with comma.
+  -s --max-size SIZE       Sets max size of php file. If file is larger, it will be skipped. [default: 1mb]
+     --file-extensions EXT Sets file extensions to be parsed. [default: php, phtml, php5]
 
 DOC;
 
