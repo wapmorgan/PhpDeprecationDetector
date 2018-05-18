@@ -26,7 +26,7 @@ Options:
      --file-extensions EXT Sets file extensions to be parsed. [default: php, phtml, php5]
 ```
 
-- By providing additional parameter `--target` you can specify version of PHP to perform less checks. Available targets: 5.3, 5.4, 5.5, 5.6, 7.0, 7.1, 7.2. A larger version includes rules for checking from all previous.
+- By providing additional parameter `--target` you can specify version of PHP to perform less checks. Available target versions: 5.3, 5.4, 5.5, 5.6, 7.0, 7.1, 7.2. A larger version includes rules for checking from all previous.
 - By providing `--exclude` paramenter you can exclude specific folders or files from analyze. For example, `--exclude vendor` will prevent checking third-party libraries.
 - If your files has unusual extension, you can specify all exts by `--file-extensions` argument. By default, it uses `php`, `phtml` and `php5`.
 
@@ -93,7 +93,7 @@ Peak memory usage: 1.135 MB
     ./phpcf-x.x.x.phar -h
     ```
 
-    b. **Global installation**: move it in to one of folders listed in your `$PATH` and run from any folder:
+   b. **Global installation**: move it in to one of folders listed in your `$PATH` and run from any folder:
     ```sh
     sudo mv phpcf-x.x.x.phar /usr/local/bin/phpcf
     phpcf -h
