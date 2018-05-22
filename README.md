@@ -10,7 +10,7 @@ PhpCodeFixer - a console scanner that checks compatibility of your code with new
 PhpCodeFixer finds:
 - Usage of deprecated functionality (functions / variables / ini-directives / constants).
 - Usage of functions with changed behavior.
-- Usage of reserved identifiers in newer versions in your php code.
+- Usage of reserved identifiers in newer versions.
 
 It literally helps you fix code that can fail after migration to newer PHP version.
 
