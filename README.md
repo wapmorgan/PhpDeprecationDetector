@@ -1,13 +1,21 @@
 # PhpCodeFixer
 
-PhpCodeFixer - a scanner that checks compatibility of your code with new interpreter versions.
+PhpCodeFixer - a console scanner that checks compatibility of your code with new interpreter versions.
 
-[![Composer package](http://composer.network/badge/wapmorgan/php-code-fixer)](https://packagist.org/packages/wapmorgan/php-code-fixer) [![Latest Stable Version](https://poser.pugx.org/wapmorgan/php-code-fixer/v/stable)](https://packagist.org/packages/wapmorgan/php-code-fixer) [![Total Downloads](https://poser.pugx.org/wapmorgan/php-code-fixer/downloads)](https://packagist.org/packages/wapmorgan/php-code-fixer) [![License](https://poser.pugx.org/wapmorgan/php-code-fixer/license)](https://packagist.org/packages/wapmorgan/php-code-fixer)
+[![Composer package](http://composer.network/badge/wapmorgan/php-code-fixer)](https://packagist.org/packages/wapmorgan/php-code-fixer)
+[![Latest Stable Version](https://poser.pugx.org/wapmorgan/php-code-fixer/v/stable)](https://packagist.org/packages/wapmorgan/php-code-fixer)
+[![Total Downloads](https://poser.pugx.org/wapmorgan/php-code-fixer/downloads)](https://packagist.org/packages/wapmorgan/php-code-fixer)
+[![License](https://poser.pugx.org/wapmorgan/php-code-fixer/license)](https://packagist.org/packages/wapmorgan/php-code-fixer)
 
-PhpCodeFixer finds usage of deprecated functions / variables / ini-directives / constants, usage of functions with changed behavior and usage of reserved identifiers in your php code. It literally helps you fix code that can fail after migration to newer PHP version.
+PhpCodeFixer finds:
+- Usage of deprecated functionality (functions / variables / ini-directives / constants).
+- Usage of functions with changed behavior.
+- Usage of reserved identifiers in newer versions in your php code.
+
+It literally helps you fix code that can fail after migration to newer PHP version.
 
 1. [Usage](#usage)
-2. [Example](#example)
+2. [Example](#example-of-usage)
 3. [Installation](#installation)
 
 # Usage
