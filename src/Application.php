@@ -91,7 +91,7 @@ class Application
     protected function checkExcludeList()
     {
         if (!empty($this->args['--exclude'])) {
-            $this->excludeList = array_map('strtolower', array_map('trim', explode(',', $this->args['--exclude'])));
+            $this->excludeList = array_map('strtolower', array_map(function ($dir) { return trim($dir, '/\\ '); }, explode(',', $this->args['--exclude'])));
             $this->echoInfoLine('Excluding following files / directories: '.implode(', ', $this->excludeList));
         }
     }
