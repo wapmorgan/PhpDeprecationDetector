@@ -13,6 +13,9 @@ class Application
     protected $excludeList = [];
 
     /** @var array */
+    protected $skipChecks = [];
+
+    /** @var array */
     protected $fileExtensions = [];
 
     /** @var IssuesBank */
@@ -41,6 +44,7 @@ class Application
         $this->checkTarget();
         $this->checkMaxSize();
         $this->checkExcludeList();
+        $this->checkSkipChecks();
         $this->checkFileExtensions();
 
         $this->initializeIssues();
@@ -92,7 +96,18 @@ class Application
     {
         if (!empty($this->args['--exclude'])) {
             $this->excludeList = array_map('strtolower', array_map(function ($dir) { return trim($dir, '/\\ '); }, explode(',', $this->args['--exclude'])));
-            $this->echoInfoLine('Excluding following files / directories: '.implode(', ', $this->excludeList));
+            $this->echoInfoLine('Excluding the following files / directories: '.implode(', ', $this->excludeList));
+        }
+    }
+
+    /**
+     * Checks --exclude- argument
+     */
+    protected function checkSkipChecks()
+    {
+        if (!empty($this->args['--skip-checks'])) {
+            $this->skipChecks = array_map('strtolower', explode(',', $this->args['--skip-checks']));
+            $this->echoInfoLine('Skipping checks containing any of the following values: '.implode(', ', $this->skipChecks));
         }
     }
 
@@ -137,10 +152,10 @@ class Application
         $this->reports = [];
         foreach ($this->args['FILES'] as $file) {
             if (is_dir($file)) {
-                $this->reports[] = PhpCodeFixer::checkDir(rtrim(realpath($file), DIRECTORY_SEPARATOR), $this->issuesBank, $this->excludeList);
+                $this->reports[] = PhpCodeFixer::checkDir(rtrim(realpath($file), DIRECTORY_SEPARATOR), $this->issuesBank, $this->excludeList, $this->skipChecks);
             } else if (is_file($file)) {
                 $report = new Report('File '.basename($file), dirname(realpath($file)));
-                $this->reports[] = PhpCodeFixer::checkFile(realpath($file), $this->issuesBank, $report);
+                $this->reports[] = PhpCodeFixer::checkFile(realpath($file), $this->issuesBank, $this->skipChecks, $report);
             }
         }
     }

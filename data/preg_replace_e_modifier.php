@@ -12,26 +12,23 @@ function preg_replace_e_modifier(array $usage_tokens) {
     $data = PhpCodeFixer::trimSpaces($data[0]);
 
     // getting delimiter
-    if ($data[0][0] == T_CONSTANT_ENCAPSED_STRING) {
-        $string = trim($data[0][1], '\'"');
-        $delimiter = $string{0};
-        if ($data[count($data)-1][0] == T_CONSTANT_ENCAPSED_STRING) {
-            $string = trim($data[count($data)-1][1], '\'"');
-            if (($modificator = strrchr($string, $delimiter)) !== false) {
-                if (strpos($modificator, 'e') !== false) {
-                    return 'Usage of "e" modifier in preg_replace is deprecated: "'.$string.'"';
-                } else {
-                    return false;
-                }
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    } else {
+    if ($data[0][0] != T_CONSTANT_ENCAPSED_STRING) {
         return false;
     }
 
-    return false;
+    $string = trim($data[0][1], '\'"');
+    $delimiter = strtr($string{0}, '({[<', ')}]>');
+
+    if ($data[count($data)-1][0] != T_CONSTANT_ENCAPSED_STRING) {
+        return false;
+    }
+
+    $string = trim($data[count($data)-1][1], '\'"');
+    $modifiers = strrchr($string, $delimiter);
+
+    if (empty($modifiers) || strpos($modifiers, 'e') === false) {
+        return false;
+    }
+
+    return 'Usage of "e" modifier in preg_replace is deprecated: "'.$string.'"';
 }
