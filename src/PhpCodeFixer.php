@@ -21,49 +21,69 @@ class PhpCodeFixer {
     static public $fileExtensions = ['php', 'php5', 'phtml'];
 
     /**
-     * @param $dir
+     * @param string $dir
      * @param IssuesBank $issues
      * @param array $excludeNamesList
+     * @param array $skipChecks
      * @return Report
      */
-    static public function checkDir($dir, IssuesBank $issues, array $excludeNamesList = []) {
+    static public function checkDir($dir, IssuesBank $issues, array $excludeNamesList = [], array $skipChecks = []) {
         TerminalInfo::echoWithColor('Scanning '.$dir.' ...'.PHP_EOL, TerminalInfo::GRAY_TEXT);
         $report = new Report('Folder '.$dir, $dir);
-        self::checkDirInternal($dir, $issues, $report, $excludeNamesList);
+        self::checkDirInternal($dir, $issues, $report, $excludeNamesList, $skipChecks);
         return $report;
     }
 
     /**
-     * @param $dir
+     * @param string $dir
      * @param IssuesBank $issues
      * @param Report $report
      * @param array $excludedNames
+     * @param array $skipChecks
      */
-    static protected function checkDirInternal($dir, IssuesBank $issues, Report $report, array $excludedNames) {
+    static protected function checkDirInternal($dir, IssuesBank $issues, Report $report, array $excludedNames, array $skipChecks) {
         foreach (glob($dir.'/*') as $file) {
             if (is_dir($file)) {
                 if (in_array(strtolower(basename($file)), $excludedNames, true))
                     TerminalInfo::echoWithColor('Folder '.$file.' skipped'.PHP_EOL, TerminalInfo::GRAY_TEXT);
                 else
-                    self::checkDirInternal($file, $issues, $report, $excludedNames);
+                    self::checkDirInternal($file, $issues, $report, $excludedNames, $skipChecks);
             } else if (is_file($file) && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), self::$fileExtensions)) {
-                self::checkFile($file, $issues, $report);
+                self::checkFile($file, $issues, $skipChecks, $report);
             }
         }
+    }
+
+    /**
+     * @param array $checks
+     * @param array $skipChecks
+     * @return array
+     */
+    static private function filterSkippedChecks(array $checks, array $skipChecks) {
+        return array_filter($checks, function($key) use ($skipChecks) {
+            foreach($skipChecks as $skipCheck) {
+                if(stripos($key, $skipCheck) !== false) {
+                    return false;
+                }
+            }
+
+            return true;
+        }, ARRAY_FILTER_USE_KEY);
     }
 
     /**
      * @param string $file
      * @param IssuesBank $issues
      * @param Report|null $report
+     * @param array $skipChecks
      * @return Report
      */
-    static public function checkFile($file, IssuesBank $issues, Report $report = null) {
+    static public function checkFile($file, IssuesBank $issues, array $skipChecks, Report $report = null) {
         if (self::$fileSizeLimit !== null && filesize($file) > self::$fileSizeLimit) {
             TerminalInfo::echoWithColor('Skipping file '.$file.' due to file size limit.'.PHP_EOL, TerminalInfo::GRAY_TEXT);
             return;
         }
-        if (empty($report)) $report = new Report();
+        if (empty($report)) $report = new Report('File '.basename($file), dirname(realpath($file)));
         $tokens = token_get_all(file_get_contents($file));
 
         // cut off heredoc, comments
@@ -74,7 +94,7 @@ class PhpCodeFixer {
         }
 
         // find for deprecated functions
-        $deprecated_functions = $issues->getAll('functions');
+        $deprecated_functions = self::filterSkippedChecks($issues->getAll('functions'), $skipChecks);
         $used_functions = array_filter_by_column($tokens, T_STRING, 0, true);
         foreach ($used_functions as $used_function_i => $used_function) {
             if (isset($deprecated_functions[$used_function[1]])) {
@@ -96,7 +116,7 @@ class PhpCodeFixer {
         }
 
         // find for deprecated constants
-        $deprecated_constants = $issues->getAll('constants');
+        $deprecated_constants = self::filterSkippedChecks($issues->getAll('constants'), $skipChecks);
         $used_constants = array_filter_by_column($tokens, T_STRING, 0, true);
         foreach ($used_constants as $used_constant_i => $used_constant) {
             if (isset($deprecated_constants[$used_constant[1]])) {
@@ -106,7 +126,7 @@ class PhpCodeFixer {
         }
 
         // find for deprecated ini settings
-        $deprecated_ini_settings = $issues->getAll('ini_settings');
+        $deprecated_ini_settings = self::filterSkippedChecks($issues->getAll('ini_settings'), $skipChecks);
         foreach ($tokens as $i => $token) {
             if ($token[0] == T_STRING && in_array($token[1], array('ini_alter', 'ini_set', 'ini_get', 'ini_restore'))) {
                 // syntax structure check
@@ -122,7 +142,7 @@ class PhpCodeFixer {
         }
 
         // find for deprecated functions usage
-        $deprecated_functions_usage = $issues->getAll('functions_usage');
+        $deprecated_functions_usage = self::filterSkippedChecks($issues->getAll('functions_usage'), $skipChecks);
 
         /** @var array $global_deprecated_usage_checkers List of global checkers (for all function calls) */
         $global_deprecated_usage_checkers = [];
