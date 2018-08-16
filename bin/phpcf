@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
-use wapmorgan\PhpCodeFixer\Application;
-use wapmorgan\PhpCodeFixer\PhpCodeFixer;
+use Symfony\Component\Console\Application;
+use wapmorgan\PhpCodeFixer\ScanCommand;
 
 function init_composer($rootDir) {
     static $paths = [
@@ -24,6 +24,13 @@ function init_composer($rootDir) {
 if (!init_composer(__DIR__)) die('Run `composer install` firstly.'.PHP_EOL);
 
 $version = file_exists(__DIR__.'/version.txt') ? trim(file_get_contents(__DIR__.'/version.txt')) : PhpCodeFixer::VERSION;
+
+$app = new Application('phpcf', $version);
+$command = new ScanCommand();
+$app->add($command);
+$app->setDefaultCommand($command->getName(), true);
+$app->run();
+
 $doc = <<<DOC
 PhpCodeFixer $version
 
@@ -40,6 +47,3 @@ Options:
      --skip-checks CHECKS  Skip all checks containing any of the given values. Pass a comma-separated list for multiple values.
 
 DOC;
-
-$args = Docopt::handle($doc, ['version' => $version]);
-(new Application($args))->run();

@@ -5,7 +5,8 @@
     "license": "BSD-3-Clause",
     "require": {
         "php": ">=5.4",
-        "docopt/docopt": "~1.0"
+        "docopt/docopt": "~1.0",
+        "symfony/console": "^3.4"
     },
     "autoload": {
         "psr-4": {
