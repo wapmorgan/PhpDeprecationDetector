@@ -270,18 +270,21 @@ class PhpCodeFixer {
                                 $attributes_index += 2;
                             }
                             $method_name = $tokens[$i+2][1];
-                            $methods[$method_name] = $method_attributes;
+                            $methods[$method_name] = [
+                                'line' => $tokens[$i][2],
+                                'attributes' => $method_attributes
+                            ];
                         }
                         $i++;
                     }
-                    foreach ($methods as $method_name => $method_attributes) {
+                    foreach ($methods as $method_name => $method_data) {
                         foreach ($methods_naming as $methods_naming_checker) {
                             $checker = ltrim($methods_naming_checker[0], '@');
                             require_once dirname(dirname(__FILE__)).'/data/'.$checker.'.php';
                             $checker = __NAMESPACE__.'\\'.$checker;
-                            $result = $checker($class_name, $method_name, $method_attributes, $methods);
+                            $result = $checker($class_name, $method_name, $method_data['attributes'], $methods);
                             if($result !== false) {
-                                $report->add($methods_naming_checker[1], 'method_name', $method_name.':'.$class_name.' ('.$methods_naming_checker[0].')', null, $file, $tokens[$i][2]);
+                                $report->add($methods_naming_checker[1], 'method_name', $method_name.':'.$class_name.' ('.$methods_naming_checker[0].')', null, $file, $method_data['line']);
                             }
                         }
                     }
