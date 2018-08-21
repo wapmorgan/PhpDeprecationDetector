@@ -249,7 +249,10 @@ class PhpCodeFixer {
                 if (!is_array($tokens[$class_start-1]) || $tokens[$class_start-1][1] != '::') {
                     $class_name = $tokens[$i+2][1];
                     $braces = 1;
-                    $i += 5;
+                    while($tokens[$i] !== '{') {
+                    	$i++;
+                    }
+                    $i++;
                     while (($braces > 0) && (($i+1) <= $total)) {
                         if ($tokens[$i] == '{') {
                             $braces++;
