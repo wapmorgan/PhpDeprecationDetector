@@ -210,7 +210,7 @@ class PhpCodeFixer {
         }
 
         // find for deprecated variables
-        $deprecated_variables = $issues->getAll('variables');
+        $deprecated_variables = self::filterSkippedChecks($issues->getAll('variables'), $skipChecks);
         $used_variables = array_filter_by_column($tokens, T_VARIABLE, 0);
         foreach ($used_variables as $used_variable) {
             if (isset($deprecated_variables[$used_variable[1]])) {
@@ -224,7 +224,7 @@ class PhpCodeFixer {
         if (defined('T_TRAIT')) $oop_words[] = T_TRAIT;
 
         // find for reserved identifiers used as names
-        $identifiers = $issues->getAll('identifiers');
+        $identifiers = self::filterSkippedChecks($issues->getAll('identifiers'), $skipChecks);
         if (!empty($identifiers)) {
             foreach ($tokens as $i => $token) {
                 if (in_array($token[0], $oop_words)) {
@@ -240,7 +240,7 @@ class PhpCodeFixer {
         }
 
         // find for methods naming deprecations
-        $methods_naming = $issues->getAll('methods_naming');
+        $methods_naming = self::filterSkippedChecks($issues->getAll('methods_naming'), $skipChecks);
         if (!empty($methods_naming)) {
             while (in_array_column($tokens, T_CLASS, 0)) {
                 $total = count($tokens);
@@ -248,10 +248,10 @@ class PhpCodeFixer {
                 $class_start = $i;
                 if (!is_array($tokens[$class_start-1]) || $tokens[$class_start-1][1] != '::') {
                     $class_name = $tokens[$i+2][1];
-	                $methods = [];
+                    $methods = [];
                     $braces = 1;
                     while($tokens[$i] !== '{') {
-                    	$i++;
+                        $i++;
                     }
                     $i++;
                     while (($braces > 0) && (($i+1) <= $total)) {
