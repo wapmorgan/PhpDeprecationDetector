@@ -76,12 +76,12 @@ class PhpCodeFixer {
      * @param IssuesBank $issues
      * @param Report|null $report
      * @param array $skipChecks
-     * @return Report
+     * @return Report|bool
      */
     static public function checkFile($file, IssuesBank $issues, array $skipChecks, Report $report = null) {
         if (self::$fileSizeLimit !== null && filesize($file) > self::$fileSizeLimit) {
             TerminalInfo::echoWithColor('Skipping file '.$file.' due to file size limit.'.PHP_EOL, TerminalInfo::GRAY_TEXT);
-            return;
+            return false;
         }
         if (empty($report)) $report = new Report('File '.basename($file), dirname(realpath($file)));
         $tokens = token_get_all(file_get_contents($file));
@@ -210,11 +210,11 @@ class PhpCodeFixer {
         }
 
         // find for deprecated variables
-        $deprecated_varibales = $issues->getAll('variables');
+        $deprecated_variables = $issues->getAll('variables');
         $used_variables = array_filter_by_column($tokens, T_VARIABLE, 0);
         foreach ($used_variables as $used_variable) {
-            if (isset($deprecated_varibales[$used_variable[1]])) {
-                $variable = $deprecated_varibales[$used_variable[1]];
+            if (isset($deprecated_variables[$used_variable[1]])) {
+                $variable = $deprecated_variables[$used_variable[1]];
                 $report->add($variable[1], 'variable', $used_variable[1], ($variable[0] != $used_variable[1] ? $variable[0] : null), $file, $used_variable[2]);
             }
         }
@@ -248,6 +248,7 @@ class PhpCodeFixer {
                 $class_start = $i;
                 if (!is_array($tokens[$class_start-1]) || $tokens[$class_start-1][1] != '::') {
                     $class_name = $tokens[$i+2][1];
+	                $methods = [];
                     $braces = 1;
                     while($tokens[$i] !== '{') {
                     	$i++;
@@ -269,18 +270,20 @@ class PhpCodeFixer {
                                 $attributes_index += 2;
                             }
                             $method_name = $tokens[$i+2][1];
-                            foreach ($methods_naming as $methods_naming_checker) {
-                                $checker = ltrim($methods_naming_checker[0], '@');
-                                require_once dirname(dirname(__FILE__)).'/data/'.$checker.'.php';
-                                $checker = __NAMESPACE__.'\\'.$checker;
-                                $result = $checker($class_name, $method_name, $method_attributes);
-                                if ($result) {
-                                    $report->add($methods_naming_checker[1], 'method_name', $method_name.':'.$class_name.' ('.$methods_naming_checker[0].')', null, $file, $tokens[$i][2]);
-                                }
-
-                            }
+                            $methods[$method_name] = $method_attributes;
                         }
                         $i++;
+                    }
+                    foreach ($methods as $method_name => $method_attributes) {
+                        foreach ($methods_naming as $methods_naming_checker) {
+                            $checker = ltrim($methods_naming_checker[0], '@');
+                            require_once dirname(dirname(__FILE__)).'/data/'.$checker.'.php';
+                            $checker = __NAMESPACE__.'\\'.$checker;
+                            $result = $checker($class_name, $method_name, $method_attributes, $methods);
+                            if($result !== false) {
+                                $report->add($methods_naming_checker[1], 'method_name', $method_name.':'.$class_name.' ('.$methods_naming_checker[0].')', null, $file, $tokens[$i][2]);
+                            }
+                        }
                     }
                 } else {
                     // ::class
@@ -297,7 +300,7 @@ class PhpCodeFixer {
      * @param array $tokens
      * @return array
      */
-    static public function makeFunctionCallTree(array $tokens, $d = false) {
+    static public function makeFunctionCallTree(array $tokens) {
         $tree = [];
         $braces = 0;
         $i = 1;
