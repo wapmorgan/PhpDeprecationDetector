@@ -182,12 +182,31 @@ class PhpCodeFixer {
             }
         }
 
+        $function_declaration = false;
+
         foreach ($tokens as $i => $token) {
-            if ($token[0] != T_STRING
-                || (isset($tokens[$i - 2]) && is_array($tokens[$i - 2]) && in_array($tokens[$i - 2][0], [T_FUNCTION], true))
-                || !isset($tokens[$i + 1])
-                || $tokens[$i + 1] !== '(')
+            if ($token[0] == T_FUNCTION) {
+                $function_declaration = true;
                 continue;
+            }
+
+            if ($function_declaration === true) {
+                if ($token === '{') {
+                    $function_declaration = false;
+                }
+
+                continue;
+            }
+
+            // not a string: for sure not a function / method call
+            if ($token[0] != T_STRING) {
+                continue;
+            }
+
+            // check if the next non-whitespace character is '('
+            if ((!isset($tokens[$i + 1]) || $tokens[$i + 1] !== '(') && (!isset($tokens[$i + 2]) || $tokens[$i + 2] !== '(')) {
+                continue;
+            }
 
             if (!isset($deprecated_functions_usage[$token[1]]) && empty($global_deprecated_usage_checkers))
                 continue;
