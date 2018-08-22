@@ -72,6 +72,35 @@ class PhpCodeFixer {
     }
 
     /**
+     * @param array $tokens
+     * @param int $class_pos
+     * @param string $default -- default: ''
+     * @return bool|string
+     */
+    static private function findClassNamespaceInTokens(array $tokens, $class_pos, $default = '') {
+        $namespace_tokens = array_slice($tokens, 0, $class_pos - 1);
+        $namespace_pos = array_search_column($namespace_tokens, T_NAMESPACE, 0);
+
+        if (empty($namespace_pos)) {
+            return $default;
+        }
+
+        $namespace_tokens = array_slice($namespace_tokens, $namespace_pos);
+        $namespace = '';
+
+        foreach ($namespace_tokens as $token) {
+            if (is_array($token) && in_array($token[0], [T_STRING, T_NS_SEPARATOR])) {
+                $namespace .= $token[1];
+            }
+            else if (in_array($token, [';', '{'])) {
+                break;
+            }
+        }
+
+        return (!empty($namespace)) ? $namespace : '';
+    }
+
+    /**
      * @param string $file
      * @param IssuesBank $issues
      * @param Report|null $report
@@ -242,11 +271,13 @@ class PhpCodeFixer {
         // find for methods naming deprecations
         $methods_naming = self::filterSkippedChecks($issues->getAll('methods_naming'), $skipChecks);
         if (!empty($methods_naming)) {
+            $namespace = null;
             while (in_array_column($tokens, T_CLASS, 0)) {
                 $total = count($tokens);
                 $i = array_search_column($tokens, T_CLASS, 0);
                 $class_start = $i;
                 if (!is_array($tokens[$class_start-1]) || $tokens[$class_start-1][1] != '::') {
+                    $namespace = self::findClassNamespaceInTokens($tokens, $class_start, $namespace);
                     $class_name = $tokens[$i+2][1];
                     $methods = [];
                     $braces = 1;
@@ -282,7 +313,7 @@ class PhpCodeFixer {
                             $checker = ltrim($methods_naming_checker[0], '@');
                             require_once dirname(dirname(__FILE__)).'/data/'.$checker.'.php';
                             $checker = __NAMESPACE__.'\\'.$checker;
-                            $result = $checker($class_name, $method_name, $method_data['attributes'], $methods);
+                            $result = $checker($class_name, $method_name, $method_data['attributes'], $methods, $namespace);
                             if($result !== false) {
                                 $report->add($methods_naming_checker[1], 'method_name', $method_name.':'.$class_name.' ('.$methods_naming_checker[0].')', null, $file, $method_data['line']);
                             }
@@ -292,7 +323,7 @@ class PhpCodeFixer {
                     // ::class
                     $i++;
                 }
-                array_splice($tokens, $class_start, $i - $class_start);
+                array_splice($tokens, 0, $i);
             }
         }
         return $report;
