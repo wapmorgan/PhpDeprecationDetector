@@ -155,7 +155,10 @@ class Application
                 $this->reports[] = PhpCodeFixer::checkDir(rtrim(realpath($file), DIRECTORY_SEPARATOR), $this->issuesBank, $this->excludeList, $this->skipChecks);
             } else if (is_file($file)) {
                 $report = new Report('File '.basename($file), dirname(realpath($file)));
-                $this->reports[] = PhpCodeFixer::checkFile(realpath($file), $this->issuesBank, $this->skipChecks, $report);
+                $report = PhpCodeFixer::checkFile(realpath($file), $this->issuesBank, $this->skipChecks, $report);
+                if($report instanceof Report) {
+                    $this->reports[] = $report;
+                }
             }
         }
     }

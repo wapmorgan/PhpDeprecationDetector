@@ -72,16 +72,45 @@ class PhpCodeFixer {
     }
 
     /**
+     * @param array $tokens
+     * @param int $class_pos
+     * @param string $default -- default: ''
+     * @return bool|string
+     */
+    static private function findClassNamespaceInTokens(array $tokens, $class_pos, $default = '') {
+        $namespace_tokens = array_slice($tokens, 0, $class_pos - 1);
+        $namespace_pos = array_search_column($namespace_tokens, T_NAMESPACE, 0);
+
+        if (empty($namespace_pos)) {
+            return $default;
+        }
+
+        $namespace_tokens = array_slice($namespace_tokens, $namespace_pos);
+        $namespace = '';
+
+        foreach ($namespace_tokens as $token) {
+            if (is_array($token) && in_array($token[0], [T_STRING, T_NS_SEPARATOR])) {
+                $namespace .= $token[1];
+            }
+            else if (in_array($token, [';', '{'])) {
+                break;
+            }
+        }
+
+        return (!empty($namespace)) ? $namespace : '';
+    }
+
+    /**
      * @param string $file
      * @param IssuesBank $issues
      * @param Report|null $report
      * @param array $skipChecks
-     * @return Report
+     * @return Report|bool
      */
     static public function checkFile($file, IssuesBank $issues, array $skipChecks, Report $report = null) {
         if (self::$fileSizeLimit !== null && filesize($file) > self::$fileSizeLimit) {
             TerminalInfo::echoWithColor('Skipping file '.$file.' due to file size limit.'.PHP_EOL, TerminalInfo::GRAY_TEXT);
-            return;
+            return false;
         }
         if (empty($report)) $report = new Report('File '.basename($file), dirname(realpath($file)));
         $tokens = token_get_all(file_get_contents($file));
@@ -153,12 +182,31 @@ class PhpCodeFixer {
             }
         }
 
+        $function_declaration = false;
+
         foreach ($tokens as $i => $token) {
-            if ($token[0] != T_STRING
-                || (isset($tokens[$i - 2]) && is_array($tokens[$i - 2]) && in_array($tokens[$i - 2][0], [T_FUNCTION], true))
-                || !isset($tokens[$i + 1])
-                || $tokens[$i + 1] !== '(')
+            if ($token[0] == T_FUNCTION) {
+                $function_declaration = true;
                 continue;
+            }
+
+            if ($function_declaration === true) {
+                if ($token === '{') {
+                    $function_declaration = false;
+                }
+
+                continue;
+            }
+
+            // not a string: for sure not a function / method call
+            if ($token[0] != T_STRING) {
+                continue;
+            }
+
+            // check if the next non-whitespace character is '('
+            if ((!isset($tokens[$i + 1]) || $tokens[$i + 1] !== '(') && (!isset($tokens[$i + 2]) || $tokens[$i + 2] !== '(')) {
+                continue;
+            }
 
             if (!isset($deprecated_functions_usage[$token[1]]) && empty($global_deprecated_usage_checkers))
                 continue;
@@ -210,11 +258,11 @@ class PhpCodeFixer {
         }
 
         // find for deprecated variables
-        $deprecated_varibales = $issues->getAll('variables');
+        $deprecated_variables = self::filterSkippedChecks($issues->getAll('variables'), $skipChecks);
         $used_variables = array_filter_by_column($tokens, T_VARIABLE, 0);
         foreach ($used_variables as $used_variable) {
-            if (isset($deprecated_varibales[$used_variable[1]])) {
-                $variable = $deprecated_varibales[$used_variable[1]];
+            if (isset($deprecated_variables[$used_variable[1]])) {
+                $variable = $deprecated_variables[$used_variable[1]];
                 $report->add($variable[1], 'variable', $used_variable[1], ($variable[0] != $used_variable[1] ? $variable[0] : null), $file, $used_variable[2]);
             }
         }
@@ -224,7 +272,7 @@ class PhpCodeFixer {
         if (defined('T_TRAIT')) $oop_words[] = T_TRAIT;
 
         // find for reserved identifiers used as names
-        $identifiers = $issues->getAll('identifiers');
+        $identifiers = self::filterSkippedChecks($issues->getAll('identifiers'), $skipChecks);
         if (!empty($identifiers)) {
             foreach ($tokens as $i => $token) {
                 if (in_array($token[0], $oop_words)) {
@@ -240,16 +288,22 @@ class PhpCodeFixer {
         }
 
         // find for methods naming deprecations
-        $methods_naming = $issues->getAll('methods_naming');
+        $methods_naming = self::filterSkippedChecks($issues->getAll('methods_naming'), $skipChecks);
         if (!empty($methods_naming)) {
+            $namespace = null;
             while (in_array_column($tokens, T_CLASS, 0)) {
                 $total = count($tokens);
                 $i = array_search_column($tokens, T_CLASS, 0);
                 $class_start = $i;
                 if (!is_array($tokens[$class_start-1]) || $tokens[$class_start-1][1] != '::') {
+                    $namespace = self::findClassNamespaceInTokens($tokens, $class_start, $namespace);
                     $class_name = $tokens[$i+2][1];
+                    $methods = [];
                     $braces = 1;
-                    $i += 5;
+                    while($tokens[$i] !== '{') {
+                        $i++;
+                    }
+                    $i++;
                     while (($braces > 0) && (($i+1) <= $total)) {
                         if ($tokens[$i] == '{') {
                             $braces++;
@@ -266,24 +320,29 @@ class PhpCodeFixer {
                                 $attributes_index += 2;
                             }
                             $method_name = $tokens[$i+2][1];
-                            foreach ($methods_naming as $methods_naming_checker) {
-                                $checker = ltrim($methods_naming_checker[0], '@');
-                                require_once dirname(dirname(__FILE__)).'/data/'.$checker.'.php';
-                                $checker = __NAMESPACE__.'\\'.$checker;
-                                $result = $checker($class_name, $method_name, $method_attributes);
-                                if ($result) {
-                                    $report->add($methods_naming_checker[1], 'method_name', $method_name.':'.$class_name.' ('.$methods_naming_checker[0].')', null, $file, $tokens[$i][2]);
-                                }
-
-                            }
+                            $methods[$method_name] = [
+                                'line' => $tokens[$i][2],
+                                'attributes' => $method_attributes
+                            ];
                         }
                         $i++;
+                    }
+                    foreach ($methods as $method_name => $method_data) {
+                        foreach ($methods_naming as $methods_naming_checker) {
+                            $checker = ltrim($methods_naming_checker[0], '@');
+                            require_once dirname(dirname(__FILE__)).'/data/'.$checker.'.php';
+                            $checker = __NAMESPACE__.'\\'.$checker;
+                            $result = $checker($class_name, $method_name, $method_data['attributes'], $methods, $namespace);
+                            if($result !== false) {
+                                $report->add($methods_naming_checker[1], 'method_name', $method_name.':'.$class_name.' ('.$methods_naming_checker[0].')', null, $file, $method_data['line']);
+                            }
+                        }
                     }
                 } else {
                     // ::class
                     $i++;
                 }
-                array_splice($tokens, $class_start, $i - $class_start);
+                array_splice($tokens, 0, $i);
             }
         }
         return $report;
@@ -294,7 +353,7 @@ class PhpCodeFixer {
      * @param array $tokens
      * @return array
      */
-    static public function makeFunctionCallTree(array $tokens, $d = false) {
+    static public function makeFunctionCallTree(array $tokens) {
         $tree = [];
         $braces = 0;
         $i = 1;
