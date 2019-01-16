@@ -18,5 +18,8 @@ function define_case_insensitive(array $usageTokens)
     if (!is_array($data[2][0]) || $data[2][0][0] !== T_STRING)
         return false;
 
+    if (strcasecmp($data[2][0][1], 'true') !== 0)
+        return false;
+
     return 'Case-insensitive flag of define() is deprecated, use original constant name in your code';
 }
