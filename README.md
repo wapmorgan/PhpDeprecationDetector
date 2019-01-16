@@ -23,19 +23,21 @@ To scan your files or folder launch `phpcf` and pass file or directory names.
 
 ```
 Usage:
-    phpcf [--target VERSION] [--max-size SIZE] [--exclude NAME] [--file-extensions EXT] FILES...
+    phpcf [--target VERSION] [--max-size SIZE] [--exclude NAME] [--file-extensions EXT] [--skip-checks CHECKS] FILES...
     phpcf --version
 
 Options:
   -v --version             Show version.
-  -t --target VERSION      Sets target php version. [default: 7.2]
-  -e --exclude NAME        Sets excluded file or directory names for scanning. If need to pass few names, join it with comma.
-  -s --max-size SIZE       Sets max size of php file. If file is larger, it will be skipped. [default: 1mb]
-     --file-extensions EXT Sets file extensions to be parsed. [default: php, phtml, php5]
+  -t --target VERSION      Change the target php version. [default: 7.3]
+  -e --exclude NAME        Exclude files / directories for scanning. Pass a comma-separated list for multiple values.
+  -s --max-size SIZE       Skip files exceeding the max. size. [default: 1mb]
+     --file-extensions EXT Only parse files with the given extension(s). Pass a comma-separated list for multiple values. [default: php, phtml, php5]
+     --skip-checks CHECKS  Skip all checks containing any of the given values. Pass a comma-separated list for multiple values.
 ```
 
-- By providing additional parameter `--target` you can specify version of PHP to perform less checks. Available target versions: 5.3, 5.4, 5.5, 5.6, 7.0, 7.1, 7.2. A larger version includes rules for checking from all previous.
-- By providing `--exclude` paramenter you can exclude specific folders or files from analyze. For example, `--exclude vendor` will prevent checking third-party libraries.
+- By providing additional parameter `--target` you can specify version of PHP to perform less checks. Available target versions: 5.3, 5.4, 5.5, 5.6, 7.0, 7.1, 7.2, 7.3. A larger version includes rules for checking from all previous.
+- By providing `--exclude` parameter you can exclude specific folders or files from analyze. For example, `--exclude vendor` will prevent checking third-party libraries.
+- By providing `--skip-checks` parameter you can exclude specific checks from analyze.
 - If your files has unusual extension, you can specify all exts by `--file-extensions` argument. By default, it uses `php`, `phtml` and `php5`.
 
 # Example of usage
