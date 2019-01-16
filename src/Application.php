@@ -1,25 +1,11 @@
 <?php
 namespace wapmorgan\PhpCodeFixer;
 
+use Exception;
+
 class Application
 {
     protected $args;
-    protected $available_versions = ['5.3', '5.4', '5.5', '5.6', '7.0', '7.1', '7.2'];
-
-    /** @var string */
-    protected $target;
-
-    /** @var array */
-    protected $excludeList = [];
-
-    /** @var array */
-    protected $skipChecks = [];
-
-    /** @var array */
-    protected $fileExtensions = [];
-
-    /** @var IssuesBank */
-    protected $issuesBank;
 
     /** @var Report[] */
     protected $reports;
@@ -28,12 +14,18 @@ class Application
     protected $hasIssue;
 
     /**
+     * @var PhpCodeFixer
+     */
+    protected $analyzer;
+
+    /**
      * Application constructor.
      * @param $args
      */
     public function __construct($args)
     {
         $this->args = $args;
+        $this->analyzer = new PhpCodeFixer();
     }
 
     /**
@@ -41,50 +33,58 @@ class Application
      */
     public function run()
     {
-        $this->checkTarget();
-        $this->checkMaxSize();
-        $this->checkExcludeList();
-        $this->checkSkipChecks();
-        $this->checkFileExtensions();
+        try {
+            $this->setTarget();
+            $this->setMaxSize();
+            $this->setExcludeList();
+            $this->setSkipChecks();
+            $this->setFileExtensions();
 
-        $this->initializeIssues();
-        $this->scanFiles();
-        $this->printReport();
-        $this->printMemoryUsage();
-        if ($this->hasIssue)
-            exit(1);
+            $this->scanFiles();
+            $this->printReport();
+            $this->printMemoryUsage();
+            if ($this->hasIssue)
+                exit(1);
+        } catch (Exception $e) {
+            $this->exitWithError($e->getMessage(), 128);
+        }
     }
 
     /**
      * Checks --target argument
+     * @throws Exception
      */
-    public function checkTarget()
+    public function setTarget()
     {
         if (empty($this->args['--target'])) {
-            return $this->target = $this->available_versions[count($this->available_versions) - 1];
-        } else if (!in_array($this->args['--target'], $this->available_versions, true)) {
-            $this->exitWithError('Target version is not valid. Available target version: '.implode(', ', $this->available_versions));
+            $this->analyzer->setTargetPhpVersion(PhpCodeFixer::getLatestSupportedTargetVersion());
+        } else {
+            $this->analyzer->setTargetPhpVersion($this->args['--target']);
         }
-
-        return $this->target = $this->args['--target'];
     }
 
     /**
      * Checks --max-size argument
      */
-    public function checkMaxSize()
+    public function setMaxSize()
     {
-        $size_units = array('b', 'kb', 'mb', 'gb');
+        static $size_units = ['kb', 'mb', 'gb'];
         if (!empty($this->args['--max-size'])) {
             foreach ($size_units as $unit) {
                 if (stripos($this->args['--max-size'], $unit) > 0) {
                     $max_size_value = (int)stristr($this->args['--max-size'], $unit, true);
-                    $max_size = $max_size_value * pow(1024, array_search($unit, $size_units));
+                    $max_size = $max_size_value * pow(1024, array_search($unit, $size_units) + 1);
+                    break;
                 }
             }
+            if (!isset($max_size)) {
+                if ((int)$this->args['--max-size'] > 0)
+                    $max_size = (int)$this->args['--max-size'];
+            }
+
             if (isset($max_size)) {
-                $this->echoInfoLine('Max file size set to: '.$this->formatSize('%.3F Ui', $max_size));
-                PhpCodeFixer::$fileSizeLimit = $max_size;
+                $this->analyzer->setFileSizeLimit($max_size);
+                $this->echoInfoLine('Max file size set to: ' . $this->formatSize('%.3F Ui', $max_size));
             }
         }
     }
@@ -92,55 +92,38 @@ class Application
     /**
      * Checks --exclude argument
      */
-    protected function checkExcludeList()
+    protected function setExcludeList()
     {
         if (!empty($this->args['--exclude'])) {
-            $this->excludeList = array_map('strtolower', array_map(function ($dir) { return trim($dir, '/\\ '); }, explode(',', $this->args['--exclude'])));
-            $this->echoInfoLine('Excluding the following files / directories: '.implode(', ', $this->excludeList));
+            $this->analyzer->setExcludedFilesList($excluded = array_map(
+                function ($dir) { return trim(strtolower($dir), '/\\ '); },
+                explode(',', $this->args['--exclude'])));
+            $this->echoInfoLine('Excluding the following files / directories: '.implode(', ', $excluded));
         }
     }
 
     /**
      * Checks --exclude- argument
      */
-    protected function checkSkipChecks()
+    protected function setSkipChecks()
     {
         if (!empty($this->args['--skip-checks'])) {
-            $this->skipChecks = array_map('strtolower', explode(',', $this->args['--skip-checks']));
-            $this->echoInfoLine('Skipping checks containing any of the following values: '.implode(', ', $this->skipChecks));
+            $this->analyzer->setSkippedChecks($skipped_checks = array_map('strtolower', explode(',', $this->args['--skip-checks'])));
+            $this->echoInfoLine('Skipping checks containing any of the following values: '.implode(', ', $skipped_checks));
         }
     }
 
     /**
      * Checks --file-extensions argument
      */
-    protected function checkFileExtensions()
+    protected function setFileExtensions()
     {
         if (!empty($this->args['--file-extensions'])) {
             $exts = array_map('strtolower', array_map('trim', explode(',', $this->args['--file-extensions'])));
-            if ($exts !== PhpCodeFixer::$fileExtensions) {
-                PhpCodeFixer::$fileExtensions = $exts;
+            if (!empty($exts)) {
+                $this->analyzer->setFileExtensions($exts);
                 $this->echoInfoLine('File extensions set to: '.implode(', ', $exts));
             }
-        }
-    }
-
-    /**
-     * Loads issues
-     */
-    public function initializeIssues()
-    {
-        // init issues bank
-        $this->issuesBank = new IssuesBank();
-        foreach ($this->available_versions as $version) {
-            $version_issues = include dirname(dirname(__FILE__)).'/data/'.$version.'.php';
-
-            foreach ($version_issues as $issues_type => $issues_list) {
-                $this->issuesBank->import($version, $issues_type, $issues_list);
-            }
-
-            if ($version == $this->target)
-                break;
         }
     }
 
@@ -149,13 +132,15 @@ class Application
      */
     protected function scanFiles()
     {
+        $this->analyzer->initialize();
         $this->reports = [];
         foreach ($this->args['FILES'] as $file) {
             if (is_dir($file)) {
-                $this->reports[] = PhpCodeFixer::checkDir(rtrim(realpath($file), DIRECTORY_SEPARATOR), $this->issuesBank, $this->excludeList, $this->skipChecks);
+                TerminalInfo::echoWithColor('Scanning '.$file.' ...'.PHP_EOL, TerminalInfo::GRAY_TEXT);
+                $this->reports[] = $this->analyzer->checkDir(rtrim(realpath($file), DIRECTORY_SEPARATOR));
             } else if (is_file($file)) {
                 $report = new Report('File '.basename($file), dirname(realpath($file)));
-                $report = PhpCodeFixer::checkFile(realpath($file), $this->issuesBank, $this->skipChecks, $report);
+                $report = $this->analyzer->checkFile(realpath($file), $report);
                 if($report instanceof Report) {
                     $this->reports[] = $report;
                 }
@@ -168,6 +153,7 @@ class Application
      */
     protected function printReport()
     {
+        // adjustable output width
         if (TerminalInfo::isInteractive()) {
             $width = TerminalInfo::getWidth();
         } else {
@@ -331,7 +317,7 @@ class Application
      * @return string
      */
     public function formatSize($format, $bytes, $unit = null) {
-        $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+        $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
         $bytes = max($bytes, 0);
         $unit = strtoupper($unit);
 

@@ -24,6 +24,8 @@ function init_composer($rootDir) {
 if (!init_composer(__DIR__)) die('Run `composer install` firstly.'.PHP_EOL);
 
 $version = file_exists(__DIR__.'/version.txt') ? trim(file_get_contents(__DIR__.'/version.txt')) : PhpCodeFixer::VERSION;
+$latest_target_version = PhpCodeFixer::getLatestSupportedTargetVersion();
+
 $doc = <<<DOC
 PhpCodeFixer $version
 
@@ -33,7 +35,7 @@ Usage:
 
 Options:
   -v --version             Show version.
-  -t --target VERSION      Change the target php version. [default: 7.2]
+  -t --target VERSION      Change the target php version. [default: $latest_target_version]
   -e --exclude NAME        Exclude files / directories for scanning. Pass a comma-separated list for multiple values.
   -s --max-size SIZE       Skip files exceeding the max. size. [default: 1mb]
      --file-extensions EXT Only parse files with the given extension(s). Pass a comma-separated list for multiple values. [default: php, phtml, php5]

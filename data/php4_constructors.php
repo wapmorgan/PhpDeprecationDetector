@@ -8,7 +8,7 @@ namespace wapmorgan\PhpCodeFixer;
  * @param array $methodAttributes
  * @param array $methods -- all methods of the given class
  * @param string $namespace -- default: null
- * @return bool
+ * @return bool|string
  */
 function php4_constructors($className, $methodName, array $methodAttributes, array $methods, $namespace = '') {
     if (strcasecmp($className, $methodName) === 0 && !in_array('static', $methodAttributes, true) && !array_key_exists('__construct', $methods) && empty($namespace)) {

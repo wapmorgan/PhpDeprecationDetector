@@ -21,7 +21,7 @@ class IssuesBank {
      * @return array
      */
     public function getAll($type) {
-        $all = array();
+        $all = [];
         foreach ($this->issues as $version => $issues) {
             if (isset($issues[$type])) {
                 foreach ($issues[$type] as $issue_name => $issue_value) {

@@ -5,6 +5,7 @@
     "license": "BSD-3-Clause",
     "require": {
         "php": ">=5.4",
+        "ext-tokenizer":"*",
         "docopt/docopt": "~1.0"
     },
     "autoload": {

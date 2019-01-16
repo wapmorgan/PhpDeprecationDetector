@@ -4,7 +4,7 @@ namespace wapmorgan\PhpCodeFixer;
 /**
  * @test 5.5
  * @param array $usage_tokens
- * @return bool
+ * @return bool|string
  */
 function preg_replace_e_modifier(array $usage_tokens) {
     $tree = PhpCodeFixer::makeFunctionCallTree($usage_tokens);

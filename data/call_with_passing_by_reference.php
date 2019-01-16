@@ -5,7 +5,7 @@ namespace wapmorgan\PhpCodeFixer;
  * @test 5.3
  * @param array $usage_tokens
  * @param string $function
- * @return bool
+ * @return bool|string
  */
 function call_with_passing_by_reference(array $usage_tokens, $function) {
     if (count($usage_tokens) === 1)

@@ -4,7 +4,7 @@ namespace wapmorgan\PhpCodeFixer;
 /**
  * @test 7.2
  * @param array $usage_tokens
- * @return bool
+ * @return bool|string
  */
 function parse_str_without_argument(array $usage_tokens) {
     $tree = PhpCodeFixer::makeFunctionCallTree($usage_tokens);
