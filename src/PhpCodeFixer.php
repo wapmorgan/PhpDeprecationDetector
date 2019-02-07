@@ -443,7 +443,7 @@ class PhpCodeFixer {
     public static function makeFunctionCallTree(array $tokens) {
         $tree = [];
         $braces_level = 0;
-        $i = 0;
+        $i = 1;
 
         while (/*$braces > 0 &&*/ isset($tokens[$i])) {
             if ($tokens[$i] == '(') $braces_level++;
