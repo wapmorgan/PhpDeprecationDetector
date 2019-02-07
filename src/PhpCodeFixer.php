@@ -259,8 +259,8 @@ class PhpCodeFixer {
             $braces = 1;
             while ($braces > 0 && isset($tokens[$k])) {
                 if (count($functionTokens) > 1 || $tokens[$k] !== ')') $functionTokens[] = $tokens[$k];
-                if ($tokens[$k] == ')') {/*var_dump($tokens[$k]);*/ $braces--;}
-                else if ($tokens[$k] == '(') {/*var_dump($tokens[$k]);*/ $braces++; }
+                if ($tokens[$k] === ')') {/*var_dump($tokens[$k]);*/ $braces--;}
+                else if ($tokens[$k] === '(') {/*var_dump($tokens[$k]);*/ $braces++; }
                 // var_dump($braces);
                 $k++;
             }
@@ -269,8 +269,7 @@ class PhpCodeFixer {
             // checking exactly this function usage
             if (isset($deprecated_functions_usage[$token[1]])) {
                 $result = self::callFunctionUsageChecker(ltrim($deprecated_functions_usage[$token[1]][0], '@'),
-                    $token[1],
-                    $functionTokens);
+                    $token[1], $functionTokens);
                 if ($result) {
                     $report->add($deprecated_functions_usage[$token[1]][1],
                         'function_usage',
@@ -395,7 +394,7 @@ class PhpCodeFixer {
      * @param array $skipChecks
      * @return array
      */
-    static private function filterSkippedChecks(array $checks, array $skipChecks) {
+    private static function filterSkippedChecks(array $checks, array $skipChecks) {
         return array_filter($checks, function($key) use ($skipChecks) {
             foreach($skipChecks as $skipCheck) {
                 if(stripos($key, $skipCheck) !== false) {
@@ -413,7 +412,7 @@ class PhpCodeFixer {
      * @param string $default -- default: ''
      * @return bool|string
      */
-    static private function findClassNamespaceInTokens(array $tokens, $class_pos, $default = '') {
+    private static function findClassNamespaceInTokens(array $tokens, $class_pos, $default = '') {
         $namespace_tokens = array_slice($tokens, 0, $class_pos - 1);
         $namespace_pos = array_search_column($namespace_tokens, T_NAMESPACE, 0);
 
@@ -441,15 +440,15 @@ class PhpCodeFixer {
      * @param array $tokens
      * @return array
      */
-    static public function makeFunctionCallTree(array $tokens) {
+    public static function makeFunctionCallTree(array $tokens) {
         $tree = [];
-        $braces = 0;
-        $i = 1;
+        $braces_level = 0;
+        $i = 0;
 
         while (/*$braces > 0 &&*/ isset($tokens[$i])) {
-            if ($tokens[$i] == '(') $braces++;
-            else if ($tokens[$i] == ')') $braces--;
-            else $tree[$braces][] = $tokens[$i];
+            if ($tokens[$i] == '(') $braces_level++;
+            else if ($tokens[$i] == ')') $braces_level--;
+            else $tree[$braces_level][] = $tokens[$i];
             $i++;
         }
         return $tree;
@@ -460,7 +459,7 @@ class PhpCodeFixer {
      * @param array $tokens
      * @return array
      */
-    static public function divideByComma(array $tokens) {
+    public static function divideByComma(array $tokens) {
         $delimited = [];
         $comma = 0;
         foreach ($tokens as $token) {
@@ -475,7 +474,7 @@ class PhpCodeFixer {
      * @param array $tokens
      * @return array
      */
-    static public function trimSpaces(array $tokens) {
+    public static function trimSpaces(array $tokens) {
         $trimmed = [];
         foreach ($tokens as $token) {
             if (is_array($token)) {
