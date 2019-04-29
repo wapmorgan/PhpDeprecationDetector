@@ -3,11 +3,11 @@ namespace wapmorgan\PhpCodeFixer;
 
 /**
  * @test 5.5
- * @param array $usage_tokens
+ * @param array $usageTokens
  * @return bool|string
  */
-function preg_replace_e_modifier(array $usage_tokens) {
-    $tree = PhpCodeFixer::makeFunctionCallTree($usage_tokens);
+function preg_replace_e_modifier(array $usageTokens) {
+    $tree = PhpCodeFixer::makeFunctionCallTree($usageTokens);
     $data = PhpCodeFixer::divideByComma($tree[0]);
     $data = PhpCodeFixer::trimSpaces($data[0]);
 

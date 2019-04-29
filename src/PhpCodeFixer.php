@@ -225,6 +225,7 @@ class PhpCodeFixer {
         }
 
         $function_declaration = false;
+        $object_function_call = false;
 
         foreach ($tokens as $i => $token) {
             if ($token[0] == T_FUNCTION) {
@@ -245,8 +246,20 @@ class PhpCodeFixer {
                 continue;
             }
 
+            // not a function usage: method call
+            // bug #36
+            if ($tokens[$i-1][0] === T_OBJECT_OPERATOR) {
+                $object_function_call = true;
+            }
+
+            // skip whitespaces
+            // bug #36
+            while ($tokens[$i+1][0] === T_WHITESPACE) {
+                $i++;
+            }
+
             // check if the next non-whitespace character is '('
-            if ((!isset($tokens[$i + 1]) || $tokens[$i + 1] !== '(') && (!isset($tokens[$i + 2]) || $tokens[$i + 2] !== '(')) {
+            if ((!isset($tokens[$i + 1]) || $tokens[$i + 1] !== '(')) {
                 continue;
             }
 
@@ -258,13 +271,21 @@ class PhpCodeFixer {
             $k = $i+2;
             $braces = 1;
             while ($braces > 0 && isset($tokens[$k])) {
-                if (count($functionTokens) > 1 || $tokens[$k] !== ')') $functionTokens[] = $tokens[$k];
+                if (count($functionTokens) > 1 || $tokens[$k] !== ')') {
+                    if ($tokens[$k][0] !== T_WHITESPACE)
+                        $functionTokens[] = $tokens[$k];
+                }
                 if ($tokens[$k] === ')') {/*var_dump($tokens[$k]);*/ $braces--;}
                 else if ($tokens[$k] === '(') {/*var_dump($tokens[$k]);*/ $braces++; }
                 // var_dump($braces);
                 $k++;
             }
             //$function[] = $tokens[$k];
+
+            if ($object_function_call) {
+                $object_function_call = false;
+                continue;
+            }
 
             // checking exactly this function usage
             if (isset($deprecated_functions_usage[$token[1]])) {
