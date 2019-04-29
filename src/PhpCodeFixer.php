@@ -416,15 +416,16 @@ class PhpCodeFixer {
      * @return array
      */
     private static function filterSkippedChecks(array $checks, array $skipChecks) {
-        return array_filter($checks, function($key) use ($skipChecks) {
+        $allowed_checks = array_filter(array_keys($checks), function($key) use ($skipChecks) {
             foreach($skipChecks as $skipCheck) {
-                if(stripos($key, $skipCheck) !== false) {
+                if (stripos($key, $skipCheck) !== false) {
                     return false;
                 }
             }
-
             return true;
-        }, ARRAY_FILTER_USE_KEY);
+        });
+
+        return array_intersect_key($checks, array_flip($allowed_checks));
     }
 
     /**
