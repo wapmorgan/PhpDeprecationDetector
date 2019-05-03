@@ -357,7 +357,7 @@ class PhpCodeFixer {
                 $total = count($tokens);
                 $i = array_search_column($tokens, T_CLASS, 0);
                 $class_start = $i;
-                if (!is_array($tokens[$class_start-1]) || $tokens[$class_start-1][1] != '::') {
+                if (!is_array($tokens[$class_start-1]) || $tokens[$class_start-1][1] != '::' && $tokens[$class_start+1] !== '(') {
                     $namespace = self::findClassNamespaceInTokens($tokens, $class_start, $namespace);
                     $class_name = $tokens[$i+2][1];
                     $methods = [];
