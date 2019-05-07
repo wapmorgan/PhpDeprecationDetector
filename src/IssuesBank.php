@@ -13,7 +13,28 @@ class IssuesBank {
      * @param array $checksFilters
      */
     public function import($version, $type, $issues, array $checksFilters = []) {
-        $this->issues[$version][$type] = $issues;
+        // filter by value
+        $issues = self::filterCheckers($issues, $checksFilters);
+        $filtered_keys = self::filterCheckers(array_keys($issues), $checksFilters);
+
+        $this->issues[$version][$type] = array_intersect_key($issues, array_flip($filtered_keys));
+    }
+
+    /**
+     * @param array $checkers
+     * @param array $disallowedChecks
+     * @return array
+     */
+    protected static function filterCheckers($checkers, array $disallowedChecks)
+    {
+        return array_filter($checkers, function ($value) use ($disallowedChecks) {
+            foreach ($disallowedChecks as $disallowedCheck) {
+                if (stripos($value, $disallowedCheck) !== false) {
+                    return false;
+                }
+            }
+            return true;
+        });
     }
 
     /**

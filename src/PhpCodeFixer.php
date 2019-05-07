@@ -112,7 +112,7 @@ class PhpCodeFixer {
             $version_issues = include dirname(dirname(__FILE__)).'/data/'.$version.'.php';
 
             foreach ($version_issues as $issues_type => $issues_list) {
-                $this->issuesBank->import($version, $issues_type, $issues_list);
+                $this->issuesBank->import($version, $issues_type, $issues_list, $this->excludedChecks);
             }
 
             if ($version == $this->target)
@@ -413,7 +413,7 @@ class PhpCodeFixer {
     protected function analyzeFunctionsUsage($currentFile, Report $report, array &$tokens)
     {
         // find for deprecated functions usage
-        $deprecated_functions_usage = self::filterSkippedChecks($this->issuesBank->getAll('functions_usage'), $this->excludedChecks);
+        $deprecated_functions_usage = $this->issuesBank->getAll('functions_usage');
 
         /** @var array $global_deprecated_usage_checkers List of global checkers (for all function calls) */
         $global_deprecated_usage_checkers = [];
@@ -529,7 +529,7 @@ class PhpCodeFixer {
     protected function analyzeIniSettings($currentFile, Report $report, array $tokens)
     {
         // find for deprecated ini settings
-        $deprecated_ini_settings = self::filterSkippedChecks($this->issuesBank->getAll('ini_settings'), $this->excludedChecks);
+        $deprecated_ini_settings = $this->issuesBank->getAll('ini_settings');
         foreach ($tokens as $i => $token) {
             if ($token[0] == T_STRING && in_array($token[1], array('ini_alter', 'ini_set', 'ini_get', 'ini_restore'))) {
                 // syntax structure check
@@ -553,7 +553,7 @@ class PhpCodeFixer {
     protected function analyzeConstants($currentFile, Report $report, array $tokens)
     {
         // find for deprecated constants
-        $deprecated_constants = self::filterSkippedChecks($this->issuesBank->getAll('constants'), $this->excludedChecks);
+        $deprecated_constants = $this->issuesBank->getAll('constants');
         $used_constants = array_filter_by_column($tokens, T_STRING, 0, true);
         foreach ($used_constants as $used_constant_i => $used_constant) {
             if (isset($deprecated_constants[$used_constant[1]])) {
@@ -571,7 +571,7 @@ class PhpCodeFixer {
     protected function analyzeFunctions($currentFile, Report $report, array &$tokens)
     {
         // find for deprecated functions
-        $deprecated_functions = self::filterSkippedChecks($this->issuesBank->getAll('functions'), $this->excludedChecks);
+        $deprecated_functions = $this->issuesBank->getAll('functions');
         $used_functions = array_filter_by_column($tokens, T_STRING, 0, true);
         foreach ($used_functions as $used_function_i => $used_function) {
             if (isset($deprecated_functions[$used_function[1]])) {
@@ -591,21 +591,5 @@ class PhpCodeFixer {
                 $report->addProblem($function[1], 'function', $used_function[1], ($function[0] != $used_function[1] ? $function[0] : null), $currentFile, $used_function[2]);
             }
         }
-    }
-
-    /**
-     * @param array $checks
-     * @param array $skipChecks
-     * @return array
-     */
-    static private function filterSkippedChecks(array $checks, array $skipChecks) {
-        return array_filter($checks, function($key) use ($skipChecks) {
-            foreach($skipChecks as $skipCheck) {
-                if(stripos($key, $skipCheck) !== false) {
-                    return false;
-                }
-            }
-            return true;
-        }, ARRAY_FILTER_USE_KEY);
     }
 }
