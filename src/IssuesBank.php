@@ -2,7 +2,7 @@
 namespace wapmorgan\PhpCodeFixer;
 
 class IssuesBank {
-    /** @var array */
+    /** @var array<string $version, array<string $type, array $issues>> */
     protected $issues = [];
 
     /**
@@ -10,8 +10,9 @@ class IssuesBank {
      * @param string $version PHP version
      * @param string $type Type of issues
      * @param array $issues List of issues
+     * @param array $checksFilters
      */
-    public function import($version, $type, $issues) {
+    public function import($version, $type, $issues, array $checksFilters = []) {
         $this->issues[$version][$type] = $issues;
     }
 
@@ -32,11 +33,11 @@ class IssuesBank {
                          * Exception: if issue with type `function_usage` does not have a key, it just adds with numeric key.
                          */
                         if ($type !== 'functions_usage')
-                            $all[$issue_value] = array($issue_value, $version);
+                            $all[$issue_value] = [$issue_value, $version];
                         else
-                            $all[] = array($issue_value, $version);
+                            $all[] = [$issue_value, $version];
                     } else
-                        $all[$issue_name] = array($issue_value, $version);
+                        $all[$issue_name] = [$issue_value, $version];
                 }
             }
         }

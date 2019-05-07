@@ -1,7 +1,8 @@
 #!/usr/bin/env php
 <?php
-use wapmorgan\PhpCodeFixer\Application;
+use Symfony\Component\Console\Application;
 use wapmorgan\PhpCodeFixer\PhpCodeFixer;
+use wapmorgan\PhpCodeFixer\ScanCommand;
 
 function init_composer($rootDir) {
     static $paths = [
@@ -24,24 +25,9 @@ function init_composer($rootDir) {
 if (!init_composer(__DIR__)) die('Run `composer install` firstly.'.PHP_EOL);
 
 $version = file_exists(__DIR__.'/version.txt') ? trim(file_get_contents(__DIR__.'/version.txt')) : PhpCodeFixer::VERSION;
-$latest_target_version = PhpCodeFixer::getLatestSupportedTargetVersion();
 
-$doc = <<<DOC
-PhpCodeFixer $version
-
-Usage:
-    phpcf [--target VERSION] [--max-size SIZE] [--exclude NAME] [--file-extensions EXT] [--skip-checks CHECKS] FILES...
-    phpcf --version
-
-Options:
-  -v --version             Show version.
-  -t --target VERSION      Change the target php version. [default: $latest_target_version]
-  -e --exclude NAME        Exclude files / directories for scanning. Pass a comma-separated list for multiple values.
-  -s --max-size SIZE       Skip files exceeding the max. size. [default: 1mb]
-     --file-extensions EXT Only parse files with the given extension(s). Pass a comma-separated list for multiple values. [default: php, phtml, php5]
-     --skip-checks CHECKS  Skip all checks containing any of the given values. Pass a comma-separated list for multiple values.
-
-DOC;
-
-$args = Docopt::handle($doc, ['version' => $version]);
-(new Application($args))->run();
+$app = new Application('phpcf', $version);
+$command = new ScanCommand();
+$app->add($command);
+$app->setDefaultCommand($command->getName(), true);
+$app->run();

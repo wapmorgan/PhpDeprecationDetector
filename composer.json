@@ -6,7 +6,10 @@
     "require": {
         "php": ">=5.4",
         "ext-tokenizer":"*",
-        "docopt/docopt": "~1.0"
+        "symfony/console": "^3.4"
+    },
+    "suggest": {
+        "ext-json": "Allows to store report in json-format"
     },
     "autoload": {
         "psr-4": {
