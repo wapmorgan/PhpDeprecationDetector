@@ -13,7 +13,10 @@ class ScanCommand extends Command
 {
     protected $args;
 
-    protected $available_versions = ['5.3', '5.4', '5.5', '5.6', '7.0', '7.1', '7.2'];
+    /**
+     * @var PhpCodeFixer
+     */
+    protected $analyzer;
 
     /** @var string */
     protected $target;
@@ -24,26 +27,49 @@ class ScanCommand extends Command
     /** @var array */
     protected $fileExtensions = [];
 
-    /** @var IssuesBank */
-    protected $issuesBank;
+    /**
+     * @var string[]
+     */
+    protected $skippedChecks = [];
 
-    /** @var Report[] */
+    /**
+     * @var Report[]
+     */
     protected $reports;
 
-    /** @var boolean */
+    /**
+     * @var boolean
+     */
     protected $hasIssue;
 
+    /**
+     * @var string
+     */
+    protected $jsonOutput;
+
+    /**
+     *
+     */
     protected function configure()
     {
         $this->setName('scan')
             ->setDescription('Scans PHP files and analyzes problems.')
-            ->addArgument('target')
             ->setDefinition(
                 new InputDefinition([
-                    new InputOption('target', 't', InputOption::VALUE_OPTIONAL),
-                    new InputOption('exclude', 'e', InputOption::VALUE_OPTIONAL),
-                    new InputOption('max-size', 's', InputOption::VALUE_OPTIONAL),
-                    new InputOption('file-extensions', null, InputOption::VALUE_OPTIONAL),
+                    new InputOption('target', 't', InputOption::VALUE_OPTIONAL,
+                        'Sets target PHP interpreter version.', end(PhpCodeFixer::$availableTargets)),
+                    new InputOption('exclude', 'e', InputOption::VALUE_OPTIONAL,
+                        'Sets excluded file or directory names for scanning. If need to pass few names, join it with comma.'),
+                    new InputOption('max-size', 's', InputOption::VALUE_OPTIONAL,
+                        'Sets max size of php file. If file is larger, it will be skipped.',
+                        '1mb'),
+                    new InputOption('file-extensions', null, InputOption::VALUE_OPTIONAL,
+                        'Sets file extensions to be parsed.',
+                        implode(', ', PhpCodeFixer::$defaultFileExtensions)),
+                    new InputOption('skip-checks', null, InputOption::VALUE_OPTIONAL,
+                        'Skip all checks containing any of the given values. Pass a comma-separated list for multiple values.'),
+                    new InputOption('output-json', null, InputOption::VALUE_OPTIONAL,
+                        'Path to store json-file with problems found in code.'),
                     new InputArgument('files', InputArgument::IS_ARRAY | InputArgument::REQUIRED,
                         'Which files you want to analyze (separate multiple names with a space)?'),
                 ])
@@ -52,15 +78,22 @@ class ScanCommand extends Command
 
     /**
      * Runs console application
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         try {
-            $this->configureApplication($input, $output);
+            $this->jsonOutput = $input->getOption('output-json');
 
-            $this->initializeIssues();
+            $this->analyzer = $this->configureAnalyzer(new PhpCodeFixer(), $input, $output);
+            $this->analyzer->initializeIssuesBank();
             $this->scanFiles($input->getArgument('files'));
-            $this->printReport($output);
+            if ($this->jsonOutput === null)
+                $this->printReports($output);
+            else
+                $this->saveToJson($this->jsonOutput);
             $this->printMemoryUsage($output);
 
             if ($this->hasIssue)
@@ -71,37 +104,50 @@ class ScanCommand extends Command
         }
     }
 
-	/**
-	 *
-	 * @throws ConfigurationException
-	 */
-    public function configureApplication(InputInterface $input, OutputInterface $output)
+    /**
+     *
+     * @param PhpCodeFixer $analyzer
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return PhpCodeFixer
+     * @throws ConfigurationException
+     */
+    public function configureAnalyzer(PhpCodeFixer $analyzer, InputInterface $input, OutputInterface $output)
     {
-        $this->setTarget($input->getOption('target'), $output);
-        $this->setMaxSize($input->getOption('max-size'), $output);
-        $this->setExcludeList($input->getOption('exclude'), $output);
-        $this->setFileExtensions($input->getOption('file-extensions'), $output);
+        $this->setTarget($analyzer, $input->getOption('target'), $output);
+        $this->setMaxSize($analyzer, $input->getOption('max-size'), $output);
+        $this->setExcludeList($analyzer, $input->getOption('exclude'), $output);
+        $this->setFileExtensions($analyzer, $input->getOption('file-extensions'), $output);
+        $this->setSkipChecks($analyzer, $input->getOption('skip-checks'), $output);
+
+        return $analyzer;
     }
 
-	/**
-	 * Checks --target argument
-	 * @throws ConfigurationException
-	 */
-    public function setTarget($value, OutputInterface $output)
+    /**
+     * Checks --target argument
+     * @param PhpCodeFixer $analyzer
+     * @param $value
+     * @param OutputInterface $output
+     * @throws ConfigurationException
+     */
+    public function setTarget(PhpCodeFixer $analyzer, $value, OutputInterface $output)
     {
-        if (empty($value)) {
-            return $this->target = $this->available_versions[count($this->available_versions) - 1];
-        } else if (!in_array($value, $this->available_versions, true)) {
-            throw new ConfigurationException('Target version is not valid. Available target version: '.implode(', ', $this->available_versions));
+        if (!empty($value)) {
+            $analyzer->setTarget($this->target = end(PhpCodeFixer::$availableTargets));
+        } else {
+            if (!in_array($value, PhpCodeFixer::$availableTargets, true))
+                throw new ConfigurationException('Target version is not valid. Available target version: '.implode(', ', PhpCodeFixer::$availableTargets));
+            $analyzer->setTarget($this->target = $value);
         }
-
-        return $this->target = $value;
     }
 
     /**
      * Checks --max-size argument
+     * @param PhpCodeFixer $analyzer
+     * @param $value
+     * @param OutputInterface $output
      */
-    public function setMaxSize($value, OutputInterface $output)
+    public function setMaxSize(PhpCodeFixer $analyzer, $value, OutputInterface $output)
     {
         $size_units = ['b', 'kb', 'mb', 'gb'];
         if (!empty($value)) {
@@ -114,7 +160,7 @@ class ScanCommand extends Command
 
             if (isset($max_size)) {
                 $output->writeln('<info>Max file size set to: '.$this->formatSize('%.3F Ui', $max_size).'</info>');
-                PhpCodeFixer::$fileSizeLimit = $max_size;
+                $analyzer->setFileSizeLimit($max_size);
             }
         }
     }
@@ -122,67 +168,64 @@ class ScanCommand extends Command
     /**
      * Checks --exclude argument
      */
-    protected function setExcludeList($value, OutputInterface $output)
+    protected function setExcludeList(PhpCodeFixer $analyzer, $value, OutputInterface $output)
     {
         if (!empty($value)) {
             $this->excludeList = array_map('strtolower', array_map(function ($dir) { return trim($dir, '/\\ '); }, explode(',', $value)));
             $output->writeln('<info>Excluding following files / directories: '.implode(', ', $this->excludeList).'</info>');
+            $analyzer->setExcludeList($this->excludeList);
         }
     }
 
     /**
      * Checks --file-extensions argument
      */
-    protected function setFileExtensions($value, OutputInterface $output)
+    protected function setFileExtensions(PhpCodeFixer $analyzer, $value, OutputInterface $output)
     {
         if (!empty($value)) {
             $exts = array_map('strtolower', array_map('trim', explode(',', $value)));
-            if ($exts !== PhpCodeFixer::$fileExtensions) {
-                PhpCodeFixer::$fileExtensions = $exts;
+            if ($exts !== PhpCodeFixer::$defaultFileExtensions) {
+                $analyzer->setFileExtensions($exts);
                 $output->writeln('<info>File extensions set to: '.implode(', ', $exts).'</info>');
             }
         }
     }
 
     /**
-     * Loads issues
+     * @param $skippedChecks
+     * @param OutputInterface $output
      */
-    public function initializeIssues()
+    public function setSkipChecks(PhpCodeFixer $analyzer, $skippedChecks, OutputInterface $output)
     {
-        // init issues bank
-        $this->issuesBank = new IssuesBank();
-        foreach ($this->available_versions as $version) {
-            $version_issues = include dirname(dirname(__FILE__)).'/data/'.$version.'.php';
-
-            foreach ($version_issues as $issues_type => $issues_list) {
-                $this->issuesBank->import($version, $issues_type, $issues_list);
-            }
-
-            if ($version == $this->target)
-                break;
+        if (!empty($skippedChecks)) {
+            $this->skippedChecks = array_map('strtolower', explode(',', $skippedChecks));
+            $output->writeln('<info>Skipping checks containing any of the following values: ' . implode(', ', $this->skippedChecks).'</info>');
+            $analyzer->setExcludedChecks($this->skippedChecks);
         }
     }
 
     /**
      * Runs analyzer
+     * @param array $files
      */
     protected function scanFiles(array $files)
     {
         $this->reports = [];
         foreach ($files as $file) {
             if (is_dir($file)) {
-                $this->reports[] = PhpCodeFixer::checkDir(rtrim(realpath($file), DIRECTORY_SEPARATOR), $this->issuesBank, $this->excludeList);
+                $this->reports[] = $this->analyzer->checkDir(rtrim(realpath($file), DIRECTORY_SEPARATOR));
             } else if (is_file($file)) {
                 $report = new Report('File '.basename($file), dirname(realpath($file)));
-                $this->reports[] = PhpCodeFixer::checkFile(realpath($file), $this->issuesBank, $report);
+                $this->reports[] = $this->analyzer->checkFile(realpath($file), $report);
             }
         }
     }
 
     /**
      * Prints analyzer report
+     * @param OutputInterface $output
      */
-    protected function printReport(OutputInterface $output)
+    protected function printReports(OutputInterface $output)
     {
         if (TerminalInfo::isInteractive()) {
             $width = TerminalInfo::getWidth();
@@ -201,10 +244,20 @@ class ScanCommand extends Command
 
             foreach ($this->reports as $report) {
                 $output->writeln(null);
-
                 $output->writeln('<fg=white>'.$report->getTitle().'</>');
 
-                $report = $report->getIssues();
+                $info_messages = $report->getInfo();
+                if (!empty($info_messages)) {
+                    foreach ($info_messages as $message) {
+                        switch ($message[0]) {
+                            case Report::INFO_MESSAGE:
+                                $output->writeln('<fg=yellow>'.$message[1].'</>');
+                                break;
+                        }
+                    }
+                }
+
+                $report_issues = $report->getIssues();
                 if (!empty($report)) {
 
 //                    echo sprintf(' %3s | %-' . $variable_length . 's | %16s | %s', 'PHP', 'File:Line', 'Type', 'Issue') . PHP_EOL;
@@ -212,13 +265,13 @@ class ScanCommand extends Command
 					$table = new Table($output);
 					$table
 						->setHeaders(['PHP', 'File:Line', 'Type', 'Issue']);
-					$rows = [];
-                    $versions = array_keys($report);
+                    $versions = array_keys($report_issues);
                     sort($versions);
 
                     // print issues by version
                     foreach ($versions as $version) {
-                        $issues = $report[$version];
+                        $table->setRows($rows = []);
+                        $issues = $report_issues[$version];
 
                         // iterate issues
                         foreach ($issues as $issue) {
@@ -254,11 +307,17 @@ class ScanCommand extends Command
                             $line_length = strlen($issue[4]);
 							$rows[] = [
 								strcmp($current_php, $version) >= 0
-									? '<red>'.$version.'</red>'
+									?
+//                                    '<red>'.
+                                        $version
+//                                    .'</red>'
 									: $version,
-								'<white>'.$issue[3].'</white><gray>'.$issue[4].'</gray>',
+								/*'<white>'.*/$issue[3]/*.'</white>*/.':'./*<gray>.'*/$issue[4]/*.'</gray>'*/,
 								$issue[0],
-								'<'.$color.'>'.str_replace('_', ' ', ucfirst($issue[0])).' '.$issue[1].($issue[0] == 'function' ? '()' : null).'</'.$color.'> is '
+//								'<'.$color.'>'.
+                                str_replace('_', ' ', ucfirst($issue[0])).' '.$issue[1].($issue[0] == 'function' ? '()' : null)
+//                                .'</'.$color.'>'
+                                .' is '
 									.($issue[0] == 'identifier' ? 'reserved by PHP core' : 'deprecated').'.',
 							];
 
@@ -279,6 +338,7 @@ class ScanCommand extends Command
                                     $replace_suggestions[$issue[0]][$issue[1]] = $issue[2];
                             }
                         }
+
                         if (!empty($rows)) {
                         	$table->setRows($rows);
                         	$table->render();
@@ -399,23 +459,76 @@ class ScanCommand extends Command
         return sprintf($format, $bytes);
     }
 
-    /**
-     * Shows error and terminates script
-     * @param string $message
-     * @param int $code
-     */
-    public function exitWithError($message, $code = 128)
+    protected function saveToJson($jsonFile)
     {
-        fwrite(STDERR, TerminalInfo::colorize($message, TerminalInfo::RED_BACKGROUND).PHP_EOL);
-        exit($code);
-    }
+        $data = [
+            'info_messages' => [],
+            'problems' => [],
+            'repalces_suggestions' => [],
+            'notes' => [],
+        ];
 
-    /**
-     * Prints information message
-     * @param string $message
-     */
-    public function echoInfoLine($message)
-    {
-        TerminalInfo::echoWithColor($message.PHP_EOL, TerminalInfo::GRAY_TEXT);
+        if (!empty($this->reports)) {
+            $total_issues = 0;
+
+            foreach ($this->reports as $report) {
+                $info_messages = $report->getInfo();
+                if (!empty($info_messages)) {
+                    foreach ($info_messages as $message) {
+                        switch ($message[0]) {
+                            case Report::INFO_MESSAGE:
+                                $data['info_messages'][] = [
+                                    'type' => 'info',
+                                    'message' => $message[1]
+                                ];
+                                break;
+                        }
+                    }
+                }
+
+                $report_issues = $report->getIssues();
+                if (!empty($report)) {
+                    $versions = array_keys($report_issues);
+                    sort($versions);
+
+                    // print issues by version
+                    foreach ($versions as $version) {
+                        $issues = $report_issues[$version];
+
+                        // iterate issues
+                        foreach ($issues as $issue) {
+                            $this->hasIssue = true;
+                            $total_issues++;
+
+                            $data['problems'][] = [
+                                'version' => $version,
+                                'file' => $issue[3],
+                                'line' => $issue[4],
+                                'type' => $issue[0],
+                                'checker' => $issue[1],
+                            ];
+
+                            if (!empty($issue[2])) {
+                                if ($issue[0] === 'function_usage') {
+                                    $data['notes'][] = [
+                                        'type' => $issue[0],
+                                        'problem' => $issue[1],
+                                        'note' => $issue[2],
+                                    ];
+                                } else {
+                                    $data['repalces_suggestions'][] = [
+                                        'type' => $issue[0],
+                                        'problem' => $issue[1].($issue[0] === 'function' ? '()' : null),
+                                        'replacement' => $issue[2].($issue[0] === 'function' ? '()' : null),
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        file_put_contents($jsonFile, json_encode($data, JSON_PRETTY_PRINT));
     }
 }

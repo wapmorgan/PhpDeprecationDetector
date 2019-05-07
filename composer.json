@@ -8,6 +8,9 @@
         "docopt/docopt": "~1.0",
         "symfony/console": "^3.4"
     },
+    "suggest": {
+        "ext-json": "Allows to store report in json-format"
+    },
     "autoload": {
         "psr-4": {
             "wapmorgan\\PhpCodeFixer\\": "src/"

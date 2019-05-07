@@ -4,7 +4,7 @@ namespace wapmorgan\PhpCodeFixer;
 /**
  * @test 7.0
  * @param array $usage_tokens
- * @return bool
+ * @return bool|string
  */
 function password_hash_salt_option(array $usage_tokens) {
     $tree = PhpCodeFixer::makeFunctionCallTree($usage_tokens);

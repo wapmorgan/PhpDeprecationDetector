@@ -1,6 +1,7 @@
 #!/usr/bin/env php
 <?php
 use Symfony\Component\Console\Application;
+use wapmorgan\PhpCodeFixer\PhpCodeFixer;
 use wapmorgan\PhpCodeFixer\ScanCommand;
 
 function init_composer($rootDir) {
@@ -30,20 +31,3 @@ $command = new ScanCommand();
 $app->add($command);
 $app->setDefaultCommand($command->getName(), true);
 $app->run();
-
-$doc = <<<DOC
-PhpCodeFixer $version
-
-Usage:
-    phpcf [--target VERSION] [--max-size SIZE] [--exclude NAME] [--file-extensions EXT] [--skip-checks CHECKS] FILES...
-    phpcf --version
-
-Options:
-  -v --version             Show version.
-  -t --target VERSION      Change the target php version. [default: 7.2]
-  -e --exclude NAME        Exclude files / directories for scanning. Pass a comma-separated list for multiple values.
-  -s --max-size SIZE       Skip files exceeding the max. size. [default: 1mb]
-     --file-extensions EXT Only parse files with the given extension(s). Pass a comma-separated list for multiple values. [default: php, phtml, php5]
-     --skip-checks CHECKS  Skip all checks containing any of the given values. Pass a comma-separated list for multiple values.
-
-DOC;

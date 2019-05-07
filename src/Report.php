@@ -11,6 +11,13 @@ class Report {
     /** @var string */
     protected $removablePath;
 
+    const INFO_MESSAGE = 1;
+
+    /**
+     * @var array[] Info messages
+     */
+    protected $info;
+
     /**
      * Report constructor.
      * @param string $reportTitle Title of report
@@ -33,10 +40,27 @@ class Report {
      * @param integer $line Line of file
      * @return void
      */
-    public function add($version, $type, $text, $replacement, $file, $line) {
+    public function addProblem($version, $type, $text, $replacement, $file, $line) {
         if ($this->removablePath !== null && strncasecmp($file, $this->removablePath, strlen($this->removablePath)) === 0)
             $file = substr($file, strlen($this->removablePath));
         $this->records[$version][] = [$type, $text, $replacement, $file, $line];
+    }
+
+    /**
+     * @param $category
+     * @param $message
+     */
+    public function addInfo($category, $message)
+    {
+        $this->info[] = [$category, $message];
+    }
+
+    /**
+     * @return array[]
+     */
+    public function getInfo()
+    {
+        return $this->info;
     }
 
     /**
