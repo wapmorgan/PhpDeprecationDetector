@@ -18,6 +18,9 @@ return [
         'parse_str' => '@parse_str_without_argument',
         'assert' => '@assert_on_string',
     ],
+    'identifiers' => [
+        'object',
+    ],
     'variables' => [
         'php_errormsg',
     ],

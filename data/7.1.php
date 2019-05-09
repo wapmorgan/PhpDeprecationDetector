@@ -46,6 +46,6 @@ return [
     ],
     'identifiers' => [
         'void',
-        'iterable'
+        'iterable',
     ],
 ];

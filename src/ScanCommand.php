@@ -315,7 +315,7 @@ class ScanCommand extends Command
 								/*'<white>'.*/$issue[3]/*.'</white>*/.':'./*<gray>.'*/$issue[4]/*.'</gray>'*/,
 								$issue[0],
 //								'<'.$color.'>'.
-                                str_replace('_', ' ', ucfirst($issue[0])).' '.$issue[1].($issue[0] == 'function' ? '()' : null)
+                                str_replace('_', ' ', ucfirst($issue[0])).' '.'"'.$issue[1].($issue[0] == 'function' ? '()' : null).'"'
 //                                .'</'.$color.'>'
                                 .' is '
 									.($issue[0] == 'identifier' ? 'reserved by PHP core' : 'deprecated').'.',

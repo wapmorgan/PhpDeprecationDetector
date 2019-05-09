@@ -16,4 +16,7 @@ class float {
     {
 
     }
+
+    static public function Int()
+    {}
 }

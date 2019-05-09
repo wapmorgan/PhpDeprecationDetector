@@ -134,7 +134,6 @@ class PhpCodeFixer {
      */
     public function checkDir($dir) {
         $report = new Report('Folder '.$dir, $dir);
-//        TerminalInfo::echoWithColor('Scanning '.$dir.' ...'.PHP_EOL, TerminalInfo::GRAY_TEXT);
         $this->checkDirInternal($dir, $report);
         return $report;
     }
@@ -367,18 +366,28 @@ class PhpCodeFixer {
     protected function analyzeIdentifiers($currentFile, Report $report, array &$tokens)
     {
         // oop reserved words
-        $oop_words = [T_CLASS, T_INTERFACE];
-        if (defined('T_TRAIT')) $oop_words[] = T_TRAIT;
+        $identifiers_prefixes = [T_CLASS, T_INTERFACE, T_FUNCTION, T_CONST];
+        if (defined('T_TRAIT')) $identifiers_prefixes[] = T_TRAIT;
 
         // find for reserved identifiers used as names
         $identifiers = $this->issuesBank->getAll('identifiers');
+
+        foreach ($identifiers as $identifier => $identifierData)
+        {
+            if (strtolower($identifier) != $identifier) {
+                $identifiers[strtolower($identifier)] = $identifiers[$identifier];
+                unset($identifiers[$identifier]);
+            }
+        }
+
         if (!empty($identifiers)) {
             foreach ($tokens as $i => $token) {
-                if (in_array($token[0], $oop_words)) {
+                if (in_array($token[0], $identifiers_prefixes)) {
                     if (isset($tokens[$i + 2]) && is_array($tokens[$i + 2]) && $tokens[$i + 2][0] == T_STRING) {
                         $used_identifier = $tokens[$i + 2];
-                        if (isset($identifiers[$used_identifier[1]])) {
-                            $identifier = $identifiers[$used_identifier[1]];
+                        $used_identifier_word = strtolower($used_identifier[1]);
+                        if (isset($identifiers[$used_identifier_word])) {
+                            $identifier = $identifiers[$used_identifier_word];
                             $report->addProblem($identifier[1], 'identifier', $used_identifier[1], null, $currentFile, $used_identifier[2]);
                         }
                     }
