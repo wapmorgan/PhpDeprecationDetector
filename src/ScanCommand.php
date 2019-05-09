@@ -132,7 +132,7 @@ class ScanCommand extends Command
      */
     public function setTarget(PhpCodeFixer $analyzer, $value, OutputInterface $output)
     {
-        if (!empty($value)) {
+        if (empty($value)) {
             $analyzer->setTarget($this->target = end(PhpCodeFixer::$availableTargets));
         } else {
             if (!in_array($value, PhpCodeFixer::$availableTargets, true))
@@ -264,14 +264,19 @@ class ScanCommand extends Command
 
 					$table = new Table($output);
 					$table
-						->setHeaders(['PHP', 'File:Line', 'Type', 'Issue']);
+						->setHeaders([/*'PHP',*/ 'File:Line', 'Type', 'Issue']);
                     $versions = array_keys($report_issues);
                     sort($versions);
 
                     // print issues by version
                     foreach ($versions as $version) {
-                        $table->setRows($rows = []);
+
                         $issues = $report_issues[$version];
+                        if (strcmp($current_php, $version) >= 0)
+                            $output->writeln('<fg=yellow>- PHP '.$version.' ('.count($issues).') - your version is greater or equal</>');
+                        else
+                            $output->writeln('<fg=yellow>- PHP '.$version.' ('.count($issues).')</>');
+                        $table->setRows($rows = []);
 
                         // iterate issues
                         foreach ($issues as $issue) {
@@ -306,12 +311,12 @@ class ScanCommand extends Command
 
                             $line_length = strlen($issue[4]);
 							$rows[] = [
-								strcmp($current_php, $version) >= 0
+								/*strcmp($current_php, $version) >= 0
 									?
 //                                    '<red>'.
                                         $version
 //                                    .'</red>'
-									: $version,
+									: $version,*/
 								/*'<white>'.*/$issue[3]/*.'</white>*/.':'./*<gray>.'*/$issue[4]/*.'</gray>'*/,
 								$issue[0],
 //								'<'.$color.'>'.
@@ -343,6 +348,7 @@ class ScanCommand extends Command
                         	$table->setRows($rows);
                         	$table->render();
 						}
+                        $output->writeln('');
                     }
                 }
             }
