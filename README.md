@@ -22,16 +22,18 @@ To scan your files or folder launch `phpcf` and pass file or directory names.
 
 ```
 Usage:
-    phpcf [--target VERSION] [--max-size SIZE] [--exclude NAME] [--file-extensions EXT] [--skip-checks CHECKS] FILES...
-    phpcf --version
+    phpcf [-t|--target [TARGET]] [-e|--exclude [EXCLUDE]] [-s|--max-size [MAX-SIZE]] [--file-extensions [FILE-EXTENSIONS]] [--skip-checks [SKIP-CHECKS]] [--output-json [OUTPUT-JSON]] [--] <files> (<files>)...
 
+Arguments:
+    files                                    Which files you want to analyze (separate multiple names with a space)?
+  
 Options:
-  -v --version             Show version.
-  -t --target VERSION      Change the target php version. [default: 7.3]
-  -e --exclude NAME        Exclude files / directories for scanning. Pass a comma-separated list for multiple values.
-  -s --max-size SIZE       Skip files exceeding the max. size. [default: 1mb]
-     --file-extensions EXT Only parse files with the given extension(s). Pass a comma-separated list for multiple values. [default: php, phtml, php5]
-     --skip-checks CHECKS  Skip all checks containing any of the given values. Pass a comma-separated list for multiple values.
+    -t, --target[=TARGET]                    Sets target PHP interpreter version. [default: "7.3"]
+    -e, --exclude[=EXCLUDE]                  Sets excluded file or directory names for scanning. If need to pass few names, join it with comma.
+    -s, --max-size[=MAX-SIZE]                Sets max size of php file. If file is larger, it will be skipped. [default: "1mb"]
+        --file-extensions[=FILE-EXTENSIONS]  Sets file extensions to be parsed. [default: "php, php5, phtml"]
+        --skip-checks[=SKIP-CHECKS]          Skip all checks containing any of the given values. Pass a comma-separated list for multiple values.
+        --output-json[=OUTPUT-JSON]          Path to store json-file with analyze results.
 ```
 
 - By providing additional parameter `--target` you can specify version of PHP to perform less checks. Available target versions: 5.3, 5.4, 5.5, 5.6, 7.0, 7.1, 7.2, 7.3. A larger version includes rules for checking from all previous.

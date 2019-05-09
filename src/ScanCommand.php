@@ -69,7 +69,7 @@ class ScanCommand extends Command
                     new InputOption('skip-checks', null, InputOption::VALUE_OPTIONAL,
                         'Skip all checks containing any of the given values. Pass a comma-separated list for multiple values.'),
                     new InputOption('output-json', null, InputOption::VALUE_OPTIONAL,
-                        'Path to store json-file with problems found in code.'),
+                        'Path to store json-file with analyze results.'),
                     new InputArgument('files', InputArgument::IS_ARRAY | InputArgument::REQUIRED,
                         'Which files you want to analyze (separate multiple names with a space)?'),
                 ])
