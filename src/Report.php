@@ -79,4 +79,12 @@ class Report {
     {
         return $this->title;
     }
+
+    /**
+     * @return string
+     */
+    public function getRemovablePath()
+    {
+        return $this->removablePath;
+    }
 }

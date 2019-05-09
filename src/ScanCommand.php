@@ -459,12 +459,15 @@ class ScanCommand extends Command
         return sprintf($format, $bytes);
     }
 
+    /**
+     * @param $jsonFile
+     */
     protected function saveToJson($jsonFile)
     {
         $data = [
             'info_messages' => [],
             'problems' => [],
-            'repalces_suggestions' => [],
+            'replace_suggestions' => [],
             'notes' => [],
         ];
 
@@ -503,6 +506,7 @@ class ScanCommand extends Command
                             $data['problems'][] = [
                                 'version' => $version,
                                 'file' => $issue[3],
+                                'path' => $report->getRemovablePath().$issue[3],
                                 'line' => $issue[4],
                                 'type' => $issue[0],
                                 'checker' => $issue[1],
@@ -516,7 +520,7 @@ class ScanCommand extends Command
                                         'note' => $issue[2],
                                     ];
                                 } else {
-                                    $data['repalces_suggestions'][] = [
+                                    $data['replace_suggestions'][] = [
                                         'type' => $issue[0],
                                         'problem' => $issue[1].($issue[0] === 'function' ? '()' : null),
                                         'replacement' => $issue[2].($issue[0] === 'function' ? '()' : null),
