@@ -575,8 +575,15 @@ class PhpCodeFixer {
         $used_functions = array_filter_by_column($tokens, T_STRING, 0, true);
         foreach ($used_functions as $used_function_i => $used_function) {
             if (isset($deprecated_functions[$used_function[1]])) {
+                $usage_offset = 0;
+                // skip whitespaces
+                // bug #36
+                while ($tokens[$used_function_i + 1 + $usage_offset][0] === T_WHITESPACE) {
+                    $usage_offset++;
+                }
+
                 // additional check for "(" after this token
-                if (!isset($tokens[$used_function_i + 1]) || $tokens[$used_function_i + 1] !== '(')
+                if (!isset($tokens[$used_function_i + $usage_offset + 1]) || $tokens[$used_function_i + $usage_offset + 1] !== '(')
                     continue;
                 // additional check for lack of "->" and "::" before this token
                 if (isset($tokens[$used_function_i - 1])

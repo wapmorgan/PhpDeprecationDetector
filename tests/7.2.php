@@ -10,3 +10,5 @@ echo INTL_IDNA_VARIANT_2003;
 
 parse_str('sad=asd', $output);
 parse_str('sad=asd');
+
+list($key, $value) = each ($output);
