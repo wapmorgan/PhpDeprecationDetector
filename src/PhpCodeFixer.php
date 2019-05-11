@@ -1,10 +1,6 @@
 <?php
 namespace wapmorgan\PhpCodeFixer;
 
-use Exception;
-
-if (!defined('T_TRAIT')) define('T_TRAIT', 'trait');
-
 class PhpCodeFixer {
 
     /**
@@ -540,7 +536,14 @@ class PhpCodeFixer {
         // find for deprecated ini settings
         $deprecated_ini_settings = $this->issuesBank->getAll('ini_settings');
         foreach ($tokens as $i => $token) {
-            if ($token[0] == T_STRING && in_array($token[1], array('ini_alter', 'ini_set', 'ini_get', 'ini_restore'))) {
+            if ($token[0] == T_STRING && in_array($token[1],
+                    [
+                        'ini_alter',
+                        'ini_set',
+                        // # ini_get() does not throw warnings
+                        // 'ini_get',
+                        'ini_restore',
+                    ])) {
                 // syntax structure check
                 if ($tokens[$i + 1] == '(' && is_array($tokens[$i + 2]) && $tokens[$i + 2][0] == T_CONSTANT_ENCAPSED_STRING) {
                     $ini_setting = $tokens[$i + 2]; // ('ini_setting'
