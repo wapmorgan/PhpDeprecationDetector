@@ -12,6 +12,7 @@ class Report {
     protected $removablePath;
 
     const INFO_MESSAGE = 1;
+    const INFO_WARNING = 2;
 
     /**
      * @var array[] Info messages

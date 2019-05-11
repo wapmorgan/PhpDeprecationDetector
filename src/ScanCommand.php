@@ -95,7 +95,6 @@ class ScanCommand extends Command
             else
                 $this->saveToJson($this->jsonOutput);
             $this->printMemoryUsage($output);
-
             if ($this->hasIssue)
                 return 1;
         } catch (ConfigurationException $e) {
@@ -253,6 +252,9 @@ class ScanCommand extends Command
                             case Report::INFO_MESSAGE:
                                 $output->writeln('<fg=yellow>'.$message[1].'</>');
                                 break;
+                            case Report::INFO_WARNING:
+                                $output->writeln('<fg=red>'.$message[1].'</>');
+                                break;
                         }
                     }
                 }
@@ -355,31 +357,34 @@ class ScanCommand extends Command
 
             echo PHP_EOL;
             if ($total_issues > 0)
-                TerminalInfo::echoWithColor(TerminalInfo::colorize('Total problems: '.$total_issues, TerminalInfo::RED_BACKGROUND).PHP_EOL, TerminalInfo::WHITE_TEXT);
+                $output->writeln('<bg=red;fg=white>Total problems: '.$total_issues.'</>');
             else
-                TerminalInfo::echoWithColor(TerminalInfo::colorize('Analyzer has not detected any problems in your code.', TerminalInfo::GREEN_BACKGROUND).PHP_EOL, TerminalInfo::WHITE_TEXT);
+                $output->writeln('<bg=green;fg=white>Analyzer has not detected any problems in your code.</>');
 
             if (!empty($replace_suggestions)) {
                 echo PHP_EOL;
-                TerminalInfo::echoWithColor('Replace Suggestions:'.PHP_EOL, TerminalInfo::WHITE_TEXT);
+                $output->writeln('<fg=white>Replace Suggestions:</>');
                 $i = 1;
                 foreach ($replace_suggestions as $type => $suggestion) {
                     foreach ($suggestion as $issue => $replacement) {
-                        echo ($i++).'. Don\'t use '.$type.' '
-                            .TerminalInfo::colorize($issue.($type === 'function' ? '()' : null), TerminalInfo::RED_UNDERLINED_TEXT)
-                            .' => Consider replace to '.TerminalInfo::colorize($replacement.($type === 'function' ? '()' : null), TerminalInfo::GREEN_TEXT).'.'.PHP_EOL;
+                        $output->writeln(($i++).'. Don\'t use '.$type.' '
+                            .'<fg=red;options=underscore>'.$issue.($type === 'function' ? '()' : null).'</>'
+                            .' => Consider replace to <fg=green>'
+                                .$replacement.($type === 'function' ? '()' : null).'</>.'
+                        );
                     }
                 }
             }
 
             if (!empty($notes)) {
                 echo PHP_EOL;
-                TerminalInfo::echoWithColor('Notes:'.PHP_EOL, TerminalInfo::WHITE_TEXT);
+                $output->writeln('<fg=white>Notes:</>');
                 $i = 1;
                 foreach ($notes as $type => $note) {
                     foreach ($note as $issue => $issue_note) {
-                        echo ($i++).'. Usage '.TerminalInfo::colorize($issue, TerminalInfo::RED_UNDERLINED_TEXT)
-                            .': '.TerminalInfo::colorize($issue_note, TerminalInfo::WHITE_TEXT).PHP_EOL;
+                        $output->writeln(($i++).'. Usage '
+                            .'<fg=red>'.$issue
+                            .'</>: <fg=white;options=bold>'.$issue_note.'</>');
                     }
                 }
             }
@@ -484,14 +489,10 @@ class ScanCommand extends Command
                 $info_messages = $report->getInfo();
                 if (!empty($info_messages)) {
                     foreach ($info_messages as $message) {
-                        switch ($message[0]) {
-                            case Report::INFO_MESSAGE:
-                                $data['info_messages'][] = [
-                                    'type' => 'info',
-                                    'message' => $message[1]
-                                ];
-                                break;
-                        }
+                        $data['info_messages'][] = [
+                            'type' => $message[0] === Report::INFO_MESSAGE ? 'info' : 'warning',
+                            'message' => $message[1]
+                        ];
                     }
                 }
 

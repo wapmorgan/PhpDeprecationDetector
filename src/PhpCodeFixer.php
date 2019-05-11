@@ -130,7 +130,9 @@ class PhpCodeFixer {
      */
     public function checkDir($dir) {
         $report = new Report('Folder '.$dir, $dir);
+        $previous_error_handler = set_error_handler([$this, 'handleError']);
         $this->checkDirInternal($dir, $report);
+        set_error_handler($previous_error_handler);
         return $report;
     }
 
@@ -157,36 +159,45 @@ class PhpCodeFixer {
      * @return Report|bool
      */
     public function checkFile($file, Report $report = null) {
-        if ($report === null)
-            $report = new Report('File '.basename($file), dirname(realpath($file)));
+        if ($report === null) {
+            $report = new Report('File ' . basename($file), dirname(realpath($file)));
+            $previous_error_handler = set_error_handler([$this, 'handleError']);
+        }
 
         if ($this->fileMaxSizeLimit !== null && filesize($file) > $this->fileMaxSizeLimit) {
             $report->addInfo(Report::INFO_MESSAGE, 'Skipping file '.$file.' due to file size limit.');
             return $report;
         }
 
-        $tokens = token_get_all(file_get_contents($file));
+        try {
+            $tokens = token_get_all(file_get_contents($file));
 
-        // cut off heredoc, comments
-        while (in_array_column($tokens, T_START_HEREDOC, 0)) {
-            $start = array_search_column($tokens, T_START_HEREDOC, 0);
-            $end = array_search_column($tokens, T_END_HEREDOC, 0);
-            array_splice($tokens, $start, ($end - $start + 1));
+            // cut off heredoc, comments
+            while (in_array_column($tokens, T_START_HEREDOC, 0)) {
+                $start = array_search_column($tokens, T_START_HEREDOC, 0);
+                $end = array_search_column($tokens, T_END_HEREDOC, 0);
+                array_splice($tokens, $start, ($end - $start + 1));
+            }
+
+            $this->analyzeFunctions($file, $report, $tokens);
+
+            $this->analyzeConstants($file, $report, $tokens);
+
+            $this->analyzeIniSettings($file, $report, $tokens);
+
+            $this->analyzeFunctionsUsage($file, $report, $tokens);
+
+            $this->analyzeVariables($file, $report, $tokens);
+
+            $this->analyzeIdentifiers($file, $report, $tokens);
+
+            $this->analyzeMethodsNaming($file, $report, $tokens);
+        } catch (ParsingException $e) {
+            $report->addInfo(Report::INFO_WARNING, $e->getMessage().' when parsing '.$file);
         }
 
-        $this->analyzeFunctions($file, $report, $tokens);
-
-        $this->analyzeConstants($file, $report, $tokens);
-
-        $this->analyzeIniSettings($file, $report, $tokens);
-
-        $this->analyzeFunctionsUsage($file, $report, $tokens);
-
-        $this->analyzeVariables($file, $report, $tokens);
-
-        $this->analyzeIdentifiers($file, $report, $tokens);
-
-        $this->analyzeMethodsNaming($file, $report, $tokens);
+        if (isset($previous_error_handler))
+            set_error_handler($previous_error_handler);
 
         return $report;
     }
@@ -610,5 +621,19 @@ class PhpCodeFixer {
                 $report->addProblem($function[1], 'function', $used_function[1], ($function[0] != $used_function[1] ? $function[0] : null), $currentFile, $used_function[2]);
             }
         }
+    }
+
+    /**
+     * @param int $errorNumber
+     * @param string $errorMessage
+     * @param string $errorFile
+     * @param int $errorLine
+     *
+     * @throws \Exception
+     */
+    public function handleError($errorNumber, $errorMessage, $errorFile,
+        $errorLine)
+    {
+        throw new ParsingException($errorMessage.' in file '.$errorFile.':'.$errorLine, $errorNumber);
     }
 }
