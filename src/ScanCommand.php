@@ -13,6 +13,9 @@ class ScanCommand extends Command
 {
     protected $args;
 
+    const STDOUT = 1;
+    const JSON = 2;
+
     /**
      * @var PhpCodeFixer
      */
@@ -45,7 +48,12 @@ class ScanCommand extends Command
     /**
      * @var string
      */
-    protected $jsonOutput;
+    protected $jsonOutputPath;
+
+    /**
+     * @var int
+     */
+    protected $outputMode = self::STDOUT;
 
     /**
      *
@@ -69,7 +77,7 @@ class ScanCommand extends Command
                     new InputOption('skip-checks', null, InputOption::VALUE_OPTIONAL,
                         'Skip all checks containing any of the given values. Pass a comma-separated list for multiple values.'),
                     new InputOption('output-json', null, InputOption::VALUE_OPTIONAL,
-                        'Path to store json-file with analyze results.'),
+                        'Path to store json-file with analyze results. If \'-\' passed, json will be printed on stdout.'),
                     new InputArgument('files', InputArgument::IS_ARRAY | InputArgument::REQUIRED,
                         'Which files you want to analyze (separate multiple names with a space)?'),
                 ])
@@ -85,16 +93,14 @@ class ScanCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         try {
-            $this->jsonOutput = $input->getOption('output-json');
+            $this->jsonOutputPath = $input->getOption('output-json');
+            if (!empty($this->jsonOutputPath))
+                $this->outputMode = self::JSON;
 
             $this->analyzer = $this->configureAnalyzer(new PhpCodeFixer(), $input, $output);
             $this->analyzer->initializeIssuesBank();
             $this->scanFiles($input->getArgument('files'));
-            if ($this->jsonOutput === null)
-                $this->printReports($output);
-            else
-                $this->saveToJson($this->jsonOutput);
-            $this->printMemoryUsage($output);
+            $this->outputAnalyzeResult($output);
             if ($this->hasIssue)
                 return 1;
         } catch (ConfigurationException $e) {
@@ -158,7 +164,9 @@ class ScanCommand extends Command
             }
 
             if (isset($max_size)) {
-                $output->writeln('<info>Max file size set to: '.$this->formatSize('%.3F Ui', $max_size).'</info>');
+                if ($this->isVerbose())
+                    $output->writeln('<info>Max file size set to: '.$this->formatSize('%.3F Ui', $max_size).'</info>');
+
                 $analyzer->setFileSizeLimit($max_size);
             }
         }
@@ -171,7 +179,10 @@ class ScanCommand extends Command
     {
         if (!empty($value)) {
             $this->excludeList = array_map('strtolower', array_map(function ($dir) { return trim($dir, '/\\ '); }, explode(',', $value)));
-            $output->writeln('<info>Excluding following files / directories: '.implode(', ', $this->excludeList).'</info>');
+
+            if ($this->isVerbose())
+                $output->writeln('<info>Excluding following files / directories: '.implode(', ', $this->excludeList).'</info>');
+
             $analyzer->setExcludeList($this->excludeList);
         }
     }
@@ -185,7 +196,9 @@ class ScanCommand extends Command
             $exts = array_map('strtolower', array_map('trim', explode(',', $value)));
             if ($exts !== PhpCodeFixer::$defaultFileExtensions) {
                 $analyzer->setFileExtensions($exts);
-                $output->writeln('<info>File extensions set to: '.implode(', ', $exts).'</info>');
+
+                if ($this->isVerbose())
+                    $output->writeln('<info>File extensions set to: '.implode(', ', $exts).'</info>');
             }
         }
     }
@@ -198,7 +211,10 @@ class ScanCommand extends Command
     {
         if (!empty($skippedChecks)) {
             $this->skippedChecks = array_map('strtolower', explode(',', $skippedChecks));
-            $output->writeln('<info>Skipping checks containing any of the following values: ' . implode(', ', $this->skippedChecks).'</info>');
+
+            if ($this->isVerbose())
+                $output->writeln('<info>Skipping checks containing any of the following values: ' . implode(', ', $this->skippedChecks).'</info>');
+
             $analyzer->setExcludedChecks($this->skippedChecks);
         }
     }
@@ -224,7 +240,7 @@ class ScanCommand extends Command
      * Prints analyzer report
      * @param OutputInterface $output
      */
-    protected function printReports(OutputInterface $output)
+    protected function outputToStdout(OutputInterface $output)
     {
         if (TerminalInfo::isInteractive()) {
             $width = TerminalInfo::getWidth();
@@ -236,9 +252,9 @@ class ScanCommand extends Command
 
         $variable_length = max(30, floor(($width - 31) * 0.4));
         $this->hasIssue = false;
+        $total_issues = 0;
 
         if (!empty($this->reports)) {
-            $total_issues = 0;
             $replace_suggestions = $notes = [];
 
             foreach ($this->reports as $report) {
@@ -355,7 +371,8 @@ class ScanCommand extends Command
                 }
             }
 
-            echo PHP_EOL;
+            $output->writeln(null);
+
             if ($total_issues > 0)
                 $output->writeln('<bg=red;fg=white>Total problems: '.$total_issues.'</>');
             else
@@ -389,6 +406,8 @@ class ScanCommand extends Command
                 }
             }
         }
+
+        return $total_issues;
     }
 
     /**
@@ -472,8 +491,9 @@ class ScanCommand extends Command
 
     /**
      * @param $jsonFile
+     * @return int
      */
-    protected function saveToJson($jsonFile)
+    protected function outputToJson($jsonFile)
     {
         $data = [
             'info_messages' => [],
@@ -482,8 +502,8 @@ class ScanCommand extends Command
             'notes' => [],
         ];
 
+        $total_issues = 0;
         if (!empty($this->reports)) {
-            $total_issues = 0;
 
             foreach ($this->reports as $report) {
                 $info_messages = $report->getInfo();
@@ -540,6 +560,49 @@ class ScanCommand extends Command
             }
         }
 
-        file_put_contents($jsonFile, json_encode($data, JSON_PRETTY_PRINT));
+        $json = json_encode(array_filter($data, function ($value) {
+            return count($value) > 0;
+        }), JSON_PRETTY_PRINT);
+
+        if ($jsonFile === '-')
+            fwrite(STDOUT, $json);
+        else
+            file_put_contents($jsonFile, $json);
+
+        return $total_issues;
+    }
+
+    /**
+     * @param OutputInterface $output
+     */
+    protected function outputAnalyzeResult(OutputInterface $output)
+    {
+        switch ($this->outputMode) {
+            case self::STDOUT:
+                $this->outputToStdout($output);
+                $this->printMemoryUsage($output);
+                break;
+
+            case self::JSON:
+                $total_issues = $this->outputToJson($this->jsonOutputPath);
+                if ($this->isVerbose()) {
+                    if ($total_issues > 0)
+                        $output->writeln('<bg=red;fg=white>Total problems: ' . $total_issues . '</>');
+                    else
+                        $output->writeln('<bg=green;fg=white>Analyzer has not detected any problems in your code.</>');
+                    $this->printMemoryUsage($output);
+                }
+                break;
+        }
+
+    }
+
+    /**
+     * Returns flag that extra information can be printed on stdout
+     * @return bool
+     */
+    protected function isVerbose()
+    {
+        return $this->outputMode !== self::JSON || $this->jsonOutputPath !== '-';
     }
 }
