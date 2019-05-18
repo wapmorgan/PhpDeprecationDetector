@@ -12,7 +12,7 @@ function call_with_passing_by_reference(array $usage_tokens, $function) {
         return false;
 
     // bug #38: invokeArgs() really accepts vars by ref
-    if ($function === 'invokeArgs')
+    if (in_array($function, ['invokeArgs', 'call_user_func_array'], true))
         return false;
 
     $tree = PhpCodeFixer::makeFunctionCallTree($usage_tokens);
