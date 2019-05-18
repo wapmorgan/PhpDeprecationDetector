@@ -5,7 +5,7 @@ namespace wapmorgan\PhpCodeFixer;
  * Checks that value is present in column of two-dimensional array
  * @param array $haystack Array to search in
  * @param mixed $needle Value to search
- * @param string $column Column name
+ * @param string|int $column Column name
  * @param bool $strict
  * @return bool
  */
@@ -29,9 +29,9 @@ function in_array_column(array $haystack, $needle, $column, $strict = false) {
  * Returns index of value in specific column of two-dimensional array
  * @param array $haystack Array to search in
  * @param mixed $needle Value to search
- * @param string $column Column name
+ * @param string|int $column Column name
  * @param bool $strict
- * @return bool
+ * @return bool|mixed
  */
 function array_search_column(array $haystack, $needle, $column, $strict = false) {
 	if ($strict) {
@@ -53,7 +53,7 @@ function array_search_column(array $haystack, $needle, $column, $strict = false)
  * Removes all second-level value from array that don't have specific value in column
  * @param array $source Array to filter
  * @param mixed $needle Value to search
- * @param string $column Column name
+ * @param string|int $column Column name
  * @param bool $preserveIndexes
  * @return array
  */

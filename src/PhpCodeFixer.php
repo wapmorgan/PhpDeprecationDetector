@@ -274,7 +274,7 @@ class PhpCodeFixer {
     /**
      * @param array $tokens
      * @param int $class_pos
-     * @param string $default -- default: ''
+     * @param string|null $default
      * @return bool|string
      */
     private static function findClassNamespaceInTokens(array $tokens, $class_pos, $default = '') {
