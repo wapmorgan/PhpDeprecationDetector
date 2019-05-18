@@ -373,7 +373,8 @@ class PhpCodeFixer {
     protected function analyzeIdentifiers($currentFile, Report $report, array &$tokens)
     {
         // oop reserved words
-        $identifiers_prefixes = [T_CLASS, T_INTERFACE, T_FUNCTION, T_CONST];
+        // functions and constants are allowed to be used as identifiers
+        $identifiers_prefixes = [T_CLASS, T_INTERFACE];
         if (defined('T_TRAIT')) $identifiers_prefixes[] = T_TRAIT;
 
         // find for reserved identifiers used as names
