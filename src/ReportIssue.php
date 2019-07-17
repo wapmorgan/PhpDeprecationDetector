@@ -3,16 +3,19 @@ namespace wapmorgan\PhpCodeFixer;
 
 class ReportIssue
 {
-    const RESERVED_IDENTIFIER = 'identifier';
-    const REMOVED_CONSTANT = 'constant';
-    const DEPRECATED = 'deprecated';
+    // categories
+    const CHANGED = 'changed';
     const VIOLATION = 'violation';
+    const REMOVED = 'removed';
+
+    // types
+    const RESERVED_IDENTIFIER = 'identifier';
+    const DEPRECATED_FEATURE = 'deprecated_feature';
     const DEPRECATED_FUNCTION_USAGE = 'function_usage';
+    const REMOVED_CONSTANT = 'constant';
     const REMOVED_FUNCTION = 'function';
     const REMOVED_INI_SETTING = 'ini';
     const REMOVED_VARIABLE = 'variable';
-    const DEPRECATED_FEATURE = 'deprecated_feature';
-    const REMOVED = 'removed';
     public $version;
 
     public $file;

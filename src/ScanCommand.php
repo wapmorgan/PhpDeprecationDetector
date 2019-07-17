@@ -2,6 +2,7 @@
 namespace wapmorgan\PhpCodeFixer;
 
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
@@ -248,6 +249,10 @@ class ScanCommand extends Command
         $this->hasIssue = false;
         $total_issues = 0;
 
+        $output->getFormatter()->setStyle('removed_issue', new OutputFormatterStyle('red', null, [/*'bold', 'blink'*/]));
+        $output->getFormatter()->setStyle('changed_issue', new OutputFormatterStyle('yellow', null, [/*'bold', 'blink'*/]));
+        $output->getFormatter()->setStyle('violation_issue', new OutputFormatterStyle('red', null, ['bold', /*'blink'*/]));
+
         if (!empty($this->reports)) {
             $replace_suggestions = $notes = [];
 
@@ -318,40 +323,26 @@ class ScanCommand extends Command
                                     break;
                             }
 
-                            $line_length = strlen($issue->text);
+                            $issue_text = sprintf('%s <%s_issue>%s</%s_issue> is %s.%s',
+                                str_replace('_', ' ', ucfirst($issue->type)),
+                                $issue->category,
+                                $issue->text.($issue->type === ReportIssue::REMOVED_FUNCTION ? '()' : null),
+                                $issue->category,
+                                $issue->type === ReportIssue::RESERVED_IDENTIFIER ? 'reserved by PHP core' : $issue->category,
+                                !empty($issue->replacement)
+                                    ? "\n".($issue->category === ReportIssue::CHANGED
+                                        ? '<comment>'.$issue->replacement.'</comment>'
+                                        : 'Consider replace with <info>'.$issue->replacement
+                                            .($issue->type === ReportIssue::REMOVED_FUNCTION ? '()' : null)
+                                    .'</info>')
+                                    : null
+                            );
+
 							$rows[] = [
-								/*strcmp($current_php, $version) >= 0
-									?
-//                                    '<red>'.
-                                        $version
-//                                    .'</red>'
-									: $version,*/
-								/*'<white>'.*/$issue->file/*.'</white>*/.':'./*<gray>.'*/$issue->line/*.'</gray>'*/,
+								'<comment>'.$issue->file.'</comment>:'.$issue->line,
 								$issue->category,
-//								'<'.$color.'>'.
-                                str_replace('_', ' ', ucfirst($issue->type)).' '.'"<info>'.$issue->text
-                                    .($issue->type === ReportIssue::REMOVED_FUNCTION ? '()' : null).'</info>"'
-//                                .'</'.$color.'>'
-                                .' is '
-									.($issue->type === ReportIssue::RESERVED_IDENTIFIER ? 'reserved by PHP core' : 'deprecated').'.',
+                                $issue_text,
 							];
-
-//                            echo sprintf(' %3s | %-' . ($variable_length + (TerminalInfo::isColorsCapable() ? 22 : 0)) . 's | %-16s | %s',
-//                                    strcmp($current_php, $version) >= 0 ? TerminalInfo::colorize($version, TerminalInfo::RED_BACKGROUND) : $version,
-//                                    TerminalInfo::colorize($this->normalizeAndTruncatePath($issue[3], $variable_length - $line_length - 1), TerminalInfo::WHITE_TEXT)
-//                                        .':'.TerminalInfo::colorize($issue[4], TerminalInfo::GRAY_TEXT),
-//                                    $issue[0],
-//                                    str_replace('_', ' ', ucfirst($issue[0])) . ' ' . TerminalInfo::colorize($issue[1].($issue[0] == 'function' ? '()' : null), $color)
-//                                    . ' is '
-//                                    . ($issue[0] == 'identifier' ? 'reserved by PHP core' : 'deprecated') . '. ') . PHP_EOL;
-
-                            if (!empty($issue->replacement)) {
-                                if (in_array($issue->type, [ReportIssue::DEPRECATED_FUNCTION_USAGE, ReportIssue::DEPRECATED_FEATURE], true)) {
-                                    $notes[$issue->type][$issue->text] = $issue->replacement;
-                                }
-                                else
-                                    $replace_suggestions[$issue->type][$issue->text] = $issue->replacement;
-                            }
                         }
 
                         if (!empty($rows)) {
@@ -369,35 +360,6 @@ class ScanCommand extends Command
                 $output->writeln('<bg=red;fg=white>Total issues: '.$total_issues.'</>');
             else
                 $output->writeln('<bg=green;fg=white>Analyzer has not detected any issues in your code.</>');
-
-            if (!empty($replace_suggestions)) {
-                echo PHP_EOL;
-                $output->writeln('<fg=white>Replace Suggestions:</>');
-                $i = 1;
-                foreach ($replace_suggestions as $type => $suggestion) {
-                    foreach ($suggestion as $issue => $replacement) {
-                        $output->writeln(($i++).'. Don\'t use '.$type.' '
-                            .'<fg=red;options=underscore>'.$issue.($type === 'function' ? '()' : null).'</>'
-                        );
-                        $output->writeln(' => Consider replace to <fg=green>'
-                            .$replacement.($type === 'function' ? '()' : null).'</>.');
-                    }
-                }
-            }
-
-            if (!empty($notes)) {
-                echo PHP_EOL;
-                $output->writeln('<fg=white>Notes:</>');
-                $i = 1;
-                foreach ($notes as $type => $note) {
-                    foreach ($note as $issue => $issue_note) {
-                        $output->writeln(($i++).'. Usage '
-                            .'<fg=red>'.$issue
-                            .'</>:');
-                        $output->writeln("\t".'<fg=white;options=bold>'.$issue_note.'</>');
-                    }
-                }
-            }
         }
 
         return $total_issues;
@@ -532,7 +494,7 @@ class ScanCommand extends Command
                             ];
 
                             if (!empty($issue->replacement)) {
-                                if (in_array($issue->type, [ReportIssue::DEPRECATED_FUNCTION_USAGE, ReportIssue::DEPRECATED_FEATURE], true)) {
+                                if ($issue->category === ReportIssue::CHANGED) {
                                     $data['notes'][] = [
                                         'type' => $issue->type,
                                         'problem' => $issue->text,

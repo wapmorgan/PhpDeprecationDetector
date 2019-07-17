@@ -352,7 +352,7 @@ class PhpCodeFixer {
                             $checker = __NAMESPACE__ . '\\' . $checker;
                             $result = $checker($class_name, $method_name, $method_data['attributes'], $methods, $namespace);
                             if ($result !== false) {
-                                $report->addIssue($methods_naming_checker[1], ReportIssue::DEPRECATED, ReportIssue::DEPRECATED_FEATURE,
+                                $report->addIssue($methods_naming_checker[1], ReportIssue::CHANGED, ReportIssue::DEPRECATED_FEATURE,
                                     $method_name . ':' . $class_name . ' (' . $methods_naming_checker[0] . ')', $result, $currentFile, $method_data['line']);
                             }
                         }
@@ -513,7 +513,7 @@ class PhpCodeFixer {
                     $functionTokens);
 
                 if ($result) {
-                    $report->addIssue($deprecated_functions_usage[$token[1]][1], ReportIssue::DEPRECATED_FEATURE, ReportIssue::DEPRECATED_FUNCTION_USAGE,
+                    $report->addIssue($deprecated_functions_usage[$token[1]][1], ReportIssue::CHANGED, ReportIssue::DEPRECATED_FUNCTION_USAGE,
                         $token[1] . '() (' . $deprecated_functions_usage[$token[1]][0] . ')', is_string($result) ? $result : null, $currentFile, $token[2]);
                 }
             }
@@ -525,7 +525,7 @@ class PhpCodeFixer {
                         $token[1],
                         $functionTokens);
                     if ($result) {
-                        $report->addIssue($global_function_usage_checker[1], ReportIssue::DEPRECATED_FEATURE, ReportIssue::DEPRECATED_FUNCTION_USAGE,
+                        $report->addIssue($global_function_usage_checker[1], ReportIssue::CHANGED, ReportIssue::DEPRECATED_FUNCTION_USAGE,
                             $token[1] . '() (' . $global_function_usage_checker[0] . ')', is_string($result) ? $result : null, $currentFile, $token[2]);
                     }
                 }
