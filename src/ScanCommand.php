@@ -61,7 +61,7 @@ class ScanCommand extends Command
     protected function configure()
     {
         $this->setName('scan')
-            ->setDescription('Scans PHP files and analyzes problems.')
+            ->setDescription('Scans PHP files and analyzes problems with deprecated functionality.')
             ->setDefinition(
                 new InputDefinition([
                     new InputOption('target', 't', InputOption::VALUE_OPTIONAL,
@@ -239,18 +239,12 @@ class ScanCommand extends Command
     /**
      * Prints analyzer report
      * @param OutputInterface $output
+     * @return int
      */
     protected function outputToStdout(OutputInterface $output)
     {
-        if (TerminalInfo::isInteractive()) {
-            $width = TerminalInfo::getWidth();
-        } else {
-            $width = 80;
-        }
-
         $current_php = substr(PHP_VERSION, 0, 3);
 
-        $variable_length = max(30, floor(($width - 31) * 0.4));
         $this->hasIssue = false;
         $total_issues = 0;
 
@@ -277,9 +271,6 @@ class ScanCommand extends Command
 
                 $report_issues = $report->getIssues();
                 if (!empty($report)) {
-
-//                    echo sprintf(' %3s | %-' . $variable_length . 's | %16s | %s', 'PHP', 'File:Line', 'Type', 'Issue') . PHP_EOL;
-
 					$table = new Table($output);
 					$table
 						->setHeaders([/*'PHP',*/ 'File:Line', 'Type', 'Issue']);
@@ -300,7 +291,7 @@ class ScanCommand extends Command
                         foreach ($issues as $issue) {
                             $this->hasIssue = true;
                             $total_issues++;
-                            switch ($issue[0]) {
+                            switch ($issue->type) {
                                 case 'function':
                                 case 'function_usage':
                                     $color = 'yellow';
@@ -327,7 +318,7 @@ class ScanCommand extends Command
                                     break;
                             }
 
-                            $line_length = strlen($issue[4]);
+                            $line_length = strlen($issue->text);
 							$rows[] = [
 								/*strcmp($current_php, $version) >= 0
 									?
@@ -335,13 +326,14 @@ class ScanCommand extends Command
                                         $version
 //                                    .'</red>'
 									: $version,*/
-								/*'<white>'.*/$issue[3]/*.'</white>*/.':'./*<gray>.'*/$issue[4]/*.'</gray>'*/,
-								$issue[0],
+								/*'<white>'.*/$issue->file/*.'</white>*/.':'./*<gray>.'*/$issue->line/*.'</gray>'*/,
+								$issue->category,
 //								'<'.$color.'>'.
-                                str_replace('_', ' ', ucfirst($issue[0])).' '.'"'.$issue[1].($issue[0] == 'function' ? '()' : null).'"'
+                                str_replace('_', ' ', ucfirst($issue->type)).' '.'"<info>'.$issue->text
+                                    .($issue->type === ReportIssue::REMOVED_FUNCTION ? '()' : null).'</info>"'
 //                                .'</'.$color.'>'
                                 .' is '
-									.($issue[0] == 'identifier' ? 'reserved by PHP core' : 'deprecated').'.',
+									.($issue->type === ReportIssue::RESERVED_IDENTIFIER ? 'reserved by PHP core' : 'deprecated').'.',
 							];
 
 //                            echo sprintf(' %3s | %-' . ($variable_length + (TerminalInfo::isColorsCapable() ? 22 : 0)) . 's | %-16s | %s',
@@ -353,12 +345,12 @@ class ScanCommand extends Command
 //                                    . ' is '
 //                                    . ($issue[0] == 'identifier' ? 'reserved by PHP core' : 'deprecated') . '. ') . PHP_EOL;
 
-                            if (!empty($issue[2])) {
-                                if ($issue[0] === 'function_usage') {
-                                    $notes[$issue[0]][$issue[1]] = $issue[2];
+                            if (!empty($issue->replacement)) {
+                                if (in_array($issue->type, [ReportIssue::DEPRECATED_FUNCTION_USAGE, ReportIssue::DEPRECATED_FEATURE], true)) {
+                                    $notes[$issue->type][$issue->text] = $issue->replacement;
                                 }
                                 else
-                                    $replace_suggestions[$issue[0]][$issue[1]] = $issue[2];
+                                    $replace_suggestions[$issue->type][$issue->text] = $issue->replacement;
                             }
                         }
 
@@ -374,9 +366,9 @@ class ScanCommand extends Command
             $output->writeln(null);
 
             if ($total_issues > 0)
-                $output->writeln('<bg=red;fg=white>Total problems: '.$total_issues.'</>');
+                $output->writeln('<bg=red;fg=white>Total issues: '.$total_issues.'</>');
             else
-                $output->writeln('<bg=green;fg=white>Analyzer has not detected any problems in your code.</>');
+                $output->writeln('<bg=green;fg=white>Analyzer has not detected any issues in your code.</>');
 
             if (!empty($replace_suggestions)) {
                 echo PHP_EOL;
@@ -386,9 +378,9 @@ class ScanCommand extends Command
                     foreach ($suggestion as $issue => $replacement) {
                         $output->writeln(($i++).'. Don\'t use '.$type.' '
                             .'<fg=red;options=underscore>'.$issue.($type === 'function' ? '()' : null).'</>'
-                            .' => Consider replace to <fg=green>'
-                                .$replacement.($type === 'function' ? '()' : null).'</>.'
                         );
+                        $output->writeln(' => Consider replace to <fg=green>'
+                            .$replacement.($type === 'function' ? '()' : null).'</>.');
                     }
                 }
             }
@@ -401,7 +393,8 @@ class ScanCommand extends Command
                     foreach ($note as $issue => $issue_note) {
                         $output->writeln(($i++).'. Usage '
                             .'<fg=red>'.$issue
-                            .'</>: <fg=white;options=bold>'.$issue_note.'</>');
+                            .'</>:');
+                        $output->writeln("\t".'<fg=white;options=bold>'.$issue_note.'</>');
                     }
                 }
             }
@@ -523,34 +516,33 @@ class ScanCommand extends Command
 
                     // print issues by version
                     foreach ($versions as $version) {
-                        $issues = $report_issues[$version];
-
                         // iterate issues
-                        foreach ($issues as $issue) {
+                        foreach ($report_issues[$version] as $issue) {
                             $this->hasIssue = true;
                             $total_issues++;
 
                             $data['problems'][] = [
                                 'version' => $version,
-                                'file' => $issue[3],
-                                'path' => $report->getRemovablePath().$issue[3],
-                                'line' => $issue[4],
-                                'type' => $issue[0],
-                                'checker' => $issue[1],
+                                'file' => $issue->file,
+                                'path' => $report->getRemovablePath().$issue->file,
+                                'line' => $issue->line,
+                                'category' => $issue->category,
+                                'type' => $issue->type,
+                                'checker' => $issue->text,
                             ];
 
-                            if (!empty($issue[2])) {
-                                if ($issue[0] === 'function_usage') {
+                            if (!empty($issue->replacement)) {
+                                if (in_array($issue->type, [ReportIssue::DEPRECATED_FUNCTION_USAGE, ReportIssue::DEPRECATED_FEATURE], true)) {
                                     $data['notes'][] = [
-                                        'type' => $issue[0],
-                                        'problem' => $issue[1],
-                                        'note' => $issue[2],
+                                        'type' => $issue->type,
+                                        'problem' => $issue->text,
+                                        'note' => $issue->replacement,
                                     ];
                                 } else {
                                     $data['replace_suggestions'][] = [
-                                        'type' => $issue[0],
-                                        'problem' => $issue[1].($issue[0] === 'function' ? '()' : null),
-                                        'replacement' => $issue[2].($issue[0] === 'function' ? '()' : null),
+                                        'type' => $issue->type,
+                                        'problem' => $issue->text.($issue->type === 'function' ? '()' : null),
+                                        'replacement' => $issue->replacement.($issue->type === 'function' ? '()' : null),
                                     ];
                                 }
                             }

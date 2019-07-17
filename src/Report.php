@@ -34,17 +34,22 @@ class Report {
     /**
      * Adds issue to the report
      * @param string $version PHP version
-     * @param string $type Issue type
+     * @param string $category Category of issue
+     * @param string $type Issue type (one of Report constants)
      * @param string $text Issue description
      * @param string|null $replacement Possible replacement
      * @param string $file File in which issue present
      * @param integer $line Line of file
      * @return void
      */
-    public function addProblem($version, $type, $text, $replacement, $file, $line) {
+    public function addIssue($version, $category, $type, $text, $replacement, $file, $line) {
         if ($this->removablePath !== null && strncasecmp($file, $this->removablePath, strlen($this->removablePath)) === 0)
             $file = substr($file, strlen($this->removablePath));
-        $this->records[$version][] = [$type, $text, $replacement, $file, $line];
+//        $this->records[$version][] = [$type, $text, $replacement, $file, $line];
+        $issue = new ReportIssue($version, $category, $type, $text, $file, $line);
+        if (!empty($replacement))
+            $issue->setReplacement($replacement);
+        $this->records[$version][] = $issue;
     }
 
     /**

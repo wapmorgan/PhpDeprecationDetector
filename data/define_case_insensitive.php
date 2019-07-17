@@ -21,5 +21,5 @@ function define_case_insensitive(array $usageTokens)
     if (strcasecmp($data[2][0][1], 'true') !== 0)
         return false;
 
-    return 'Case-insensitive flag of define() is deprecated, use original constant name in your code';
+    return 'Case-insensitive flag of define() is deprecated, use original constant name in your code ('.$data[0][0][1].')';
 }

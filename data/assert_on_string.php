@@ -13,5 +13,5 @@ function assert_on_string(array $usageTokens) {
     if (!is_array($data[0][0]) || $data[0][0][0] != T_CONSTANT_ENCAPSED_STRING)
         return false;
 
-    return 'You should avoid using string code: "'.$data[0][0][1].'"';
+    return 'You should avoid using string code: '.$data[0][0][1].' in assert() usage';
 }

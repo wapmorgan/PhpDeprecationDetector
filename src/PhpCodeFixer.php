@@ -147,8 +147,8 @@ class PhpCodeFixer {
                     $report->addInfo(Report::INFO_MESSAGE, 'Folder ' . $file . ' skipped');
                 } else
                     $this->checkDirInternal($file, $report);
-            } else if (is_file($file) && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), $this->fileExtensions)) {
-                self::checkFile($file, $report);
+            } else if (is_file($file) && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), $this->fileExtensions, true)) {
+                $this->checkFile($file, $report);
             }
         }
     }
@@ -213,8 +213,8 @@ class PhpCodeFixer {
         $i = 1;
 
         while (/*$braces > 0 &&*/ isset($tokens[$i])) {
-            if ($tokens[$i] == '(') $braces_level++;
-            else if ($tokens[$i] == ')') $braces_level--;
+            if ($tokens[$i] === '(') $braces_level++;
+            else if ($tokens[$i] === ')') $braces_level--;
             else $tree[$braces_level][] = $tokens[$i];
             $i++;
         }
@@ -230,7 +230,7 @@ class PhpCodeFixer {
         $delimited = [];
         $comma = 0;
         foreach ($tokens as $token) {
-            if ($token == ',') $comma++;
+            if ($token === ',') $comma++;
             else $delimited[$comma][] = $token;
         }
         return $delimited;
@@ -265,10 +265,9 @@ class PhpCodeFixer {
      */
     protected static function callFunctionUsageChecker($checker, $functionName, array $callTokens)
     {
-        require_once dirname(dirname(__FILE__)).'/data/'.$checker.'.php';
+        require_once dirname(__DIR__).'/data/'.$checker.'.php';
         $checker = __NAMESPACE__ . '\\' . $checker;
-        $result = $checker($callTokens, $functionName);
-        return $result;
+        return $checker($callTokens, $functionName);
     }
 
     /**
@@ -311,7 +310,8 @@ class PhpCodeFixer {
                 $total = count($tokens);
                 $i = array_search_column($tokens, T_CLASS, 0);
                 $class_start = $i;
-                if (!is_array($tokens[$class_start - 1]) || $tokens[$class_start - 1][1] != '::' && $tokens[$class_start + 1] !== '(') {
+                // check for ABC::class usage
+                if (!is_array($tokens[$class_start - 1]) || ($tokens[$class_start - 1][1] !== '::' && $tokens[$class_start + 1] !== '(')) {
                     $namespace = self::findClassNamespaceInTokens($tokens, $class_start, $namespace);
                     $class_name = $tokens[$i + 2][1];
                     $methods = [];
@@ -323,10 +323,10 @@ class PhpCodeFixer {
                     $i++;
 
                     while (($braces > 0) && (($i + 1) <= $total)) {
-                        if ($tokens[$i] == '{') {
+                        if ($tokens[$i] === '{') {
                             $braces++;
                             /*echo '++';*/
-                        } else if ($tokens[$i] == '}') {
+                        } else if ($tokens[$i] === '}') {
                             $braces--;
                             /*echo '--';*/
                         } else if (is_array($tokens[$i]) && $tokens[$i][0] == T_FUNCTION && is_array($tokens[$i + 2])) {
@@ -348,11 +348,12 @@ class PhpCodeFixer {
                     foreach ($methods as $method_name => $method_data) {
                         foreach ($methods_naming as $methods_naming_checker) {
                             $checker = ltrim($methods_naming_checker[0], '@');
-                            require_once dirname(dirname(__FILE__)) . '/data/' . $checker . '.php';
+                            require_once dirname(__DIR__) . '/data/' . $checker . '.php';
                             $checker = __NAMESPACE__ . '\\' . $checker;
                             $result = $checker($class_name, $method_name, $method_data['attributes'], $methods, $namespace);
                             if ($result !== false) {
-                                $report->addProblem($methods_naming_checker[1], 'method_name', $method_name . ':' . $class_name . ' (' . $methods_naming_checker[0] . ')', null, $currentFile, $method_data['line']);
+                                $report->addIssue($methods_naming_checker[1], ReportIssue::DEPRECATED, ReportIssue::DEPRECATED_FEATURE,
+                                    $method_name . ':' . $class_name . ' (' . $methods_naming_checker[0] . ')', $result, $currentFile, $method_data['line']);
                             }
                         }
                     }
@@ -390,13 +391,14 @@ class PhpCodeFixer {
 
         if (!empty($identifiers)) {
             foreach ($tokens as $i => $token) {
-                if (in_array($token[0], $identifiers_prefixes)) {
+                if (in_array($token[0], $identifiers_prefixes, true)) {
                     if (isset($tokens[$i + 2]) && is_array($tokens[$i + 2]) && $tokens[$i + 2][0] == T_STRING) {
                         $used_identifier = $tokens[$i + 2];
                         $used_identifier_word = strtolower($used_identifier[1]);
                         if (isset($identifiers[$used_identifier_word])) {
                             $identifier = $identifiers[$used_identifier_word];
-                            $report->addProblem($identifier[1], 'identifier', $used_identifier[1], null, $currentFile, $used_identifier[2]);
+                            $report->addIssue($identifier[1], ReportIssue::VIOLATION, ReportIssue::RESERVED_IDENTIFIER,
+                                $used_identifier[1], null, $currentFile, $used_identifier[2]);
                         }
                     }
                 }
@@ -417,7 +419,8 @@ class PhpCodeFixer {
         foreach ($used_variables as $used_variable) {
             if (isset($deprecated_varibales[$used_variable[1]])) {
                 $variable = $deprecated_varibales[$used_variable[1]];
-                $report->addProblem($variable[1], 'variable', $used_variable[1], ($variable[0] != $used_variable[1] ? $variable[0] : null), $currentFile, $used_variable[2]);
+                $report->addIssue($variable[1], ReportIssue::REMOVED, ReportIssue::REMOVED_VARIABLE,
+                    $used_variable[1], ($variable[0] != $used_variable[1] ? $variable[0] : null), $currentFile, $used_variable[2]);
             }
         }
     }
@@ -488,9 +491,9 @@ class PhpCodeFixer {
                     if ($tokens[$k][0] !== T_WHITESPACE)
                         $functionTokens[] = $tokens[$k];
                 }
-                if ($tokens[$k] == ')') {/*var_dump($tokens[$k]);*/
+                if ($tokens[$k] === ')') {/*var_dump($tokens[$k]);*/
                     $braces--;
-                } else if ($tokens[$k] == '(') {/*var_dump($tokens[$k]);*/
+                } else if ($tokens[$k] === '(') {/*var_dump($tokens[$k]);*/
                     $braces++;
                 }
                 // var_dump($braces);
@@ -510,12 +513,8 @@ class PhpCodeFixer {
                     $functionTokens);
 
                 if ($result) {
-                    $report->addProblem($deprecated_functions_usage[$token[1]][1],
-                        'function_usage',
-                        $token[1] . '() (' . $deprecated_functions_usage[$token[1]][0] . ')',
-                        is_string($result) ? $result : null,
-                        $currentFile,
-                        $token[2]);
+                    $report->addIssue($deprecated_functions_usage[$token[1]][1], ReportIssue::DEPRECATED_FEATURE, ReportIssue::DEPRECATED_FUNCTION_USAGE,
+                        $token[1] . '() (' . $deprecated_functions_usage[$token[1]][0] . ')', is_string($result) ? $result : null, $currentFile, $token[2]);
                 }
             }
 
@@ -526,12 +525,8 @@ class PhpCodeFixer {
                         $token[1],
                         $functionTokens);
                     if ($result) {
-                        $report->addProblem($global_function_usage_checker[1],
-                            'function_usage',
-                            $token[1] . '() (' . $global_function_usage_checker[0] . ')',
-                            is_string($result) ? $result : null,
-                            $currentFile,
-                            $token[2]);
+                        $report->addIssue($global_function_usage_checker[1], ReportIssue::DEPRECATED_FEATURE, ReportIssue::DEPRECATED_FUNCTION_USAGE,
+                            $token[1] . '() (' . $global_function_usage_checker[0] . ')', is_string($result) ? $result : null, $currentFile, $token[2]);
                     }
                 }
             }
@@ -562,7 +557,8 @@ class PhpCodeFixer {
                     $ini_setting[1] = trim($ini_setting[1], '\'"');
                     if (isset($deprecated_ini_settings[$ini_setting[1]])) {
                         $deprecated_setting = $deprecated_ini_settings[$ini_setting[1]];
-                        $report->addProblem($deprecated_setting[1], 'ini', $ini_setting[1], ($deprecated_setting[0] != $ini_setting[1] ? $deprecated_setting[0] : null), $currentFile, $ini_setting[2]);
+                        $report->addIssue($deprecated_setting[1], ReportIssue::REMOVED, ReportIssue::REMOVED_INI_SETTING,
+                            $ini_setting[1], ($deprecated_setting[0] != $ini_setting[1] ? $deprecated_setting[0] : null), $currentFile, $ini_setting[2]);
                     }
                 }
             }
@@ -582,7 +578,8 @@ class PhpCodeFixer {
         foreach ($used_constants as $used_constant_i => $used_constant) {
             if (isset($deprecated_constants[$used_constant[1]])) {
                 $constant = $deprecated_constants[$used_constant[1]];
-                $report->addProblem($constant[1], 'constant', $used_constant[1], ($constant[0] != $used_constant[1] ? $constant[0] : null), $currentFile, $used_constant[2]);
+                $report->addIssue($constant[1], ReportIssue::REMOVED, ReportIssue::REMOVED_CONSTANT,
+                    $used_constant[1], ($constant[0] != $used_constant[1] ? $constant[0] : null), $currentFile, $used_constant[2]);
             }
         }
     }
@@ -619,7 +616,8 @@ class PhpCodeFixer {
                     continue;
 
                 $function = $deprecated_functions[$used_function[1]];
-                $report->addProblem($function[1], 'function', $used_function[1], ($function[0] != $used_function[1] ? $function[0] : null), $currentFile, $used_function[2]);
+                $report->addIssue($function[1], ReportIssue::REMOVED, ReportIssue::REMOVED_FUNCTION,
+                    $used_function[1], ($function[0] != $used_function[1] ? $function[0] : null), $currentFile, $used_function[2]);
             }
         }
     }

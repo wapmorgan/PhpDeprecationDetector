@@ -11,7 +11,10 @@ namespace wapmorgan\PhpCodeFixer;
  * @return bool|string
  */
 function php4_constructors($className, $methodName, array $methodAttributes, array $methods, $namespace = '') {
-    if (strcasecmp($className, $methodName) === 0 && !in_array('static', $methodAttributes, true) && !array_key_exists('__construct', $methods) && empty($namespace)) {
+    if (strcasecmp($className, $methodName) === 0
+        && !in_array('static', $methodAttributes, true)
+        && !array_key_exists('__construct', $methods)
+        && empty($namespace)) {
         return 'You should use __constructor() method instead of "'.$methodName.'"';
     }
 
