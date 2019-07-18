@@ -1,6 +1,6 @@
 {
     "name": "wapmorgan/php-code-fixer",
-    "description": "A scanner that checks compatibility of your code with new interpreter versions.",
+    "description": "Analyzer of PHP code to search issues with deprecated functionality in newer interpreter versions.",
     "type": "package",
     "license": "BSD-3-Clause",
     "require": {
@@ -10,7 +10,7 @@
         "symfony/console": "^3.4"
     },
     "suggest": {
-        "ext-json": "Allows to store report in json-format"
+        "ext-json": "Adds ability to store report in JSON format"
     },
     "autoload": {
         "psr-4": {

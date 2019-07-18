@@ -62,7 +62,7 @@ class ScanCommand extends Command
     protected function configure()
     {
         $this->setName('scan')
-            ->setDescription('Scans PHP files and analyzes problems with deprecated functionality.')
+            ->setDescription('Analyzes PHP code and searches issues with deprecated functionality in newer interpreter versions.')
             ->setDefinition(
                 new InputDefinition([
                     new InputOption('target', 't', InputOption::VALUE_OPTIONAL,
