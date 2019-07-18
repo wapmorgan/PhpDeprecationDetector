@@ -16,7 +16,7 @@ It literally helps you find code that can fail after migration to newer PHP vers
 1. [Installation](#installation)
 2. [Usage](#usage)
   - [Console scanner](#console-scanner)
-  - [Json output](#json-output)
+  - [Json report format](#json-report-format)
 
 # Installation
 
@@ -119,6 +119,7 @@ Also, you can store analyze result in json format for automatic check. Pass `--o
 - ReplaceSuggestion[] **replace_suggestions** - list of replacement suggestions based on your code.
 - Note[] **notes** - list of notes about new functions behaviour.
 
+Items description:
 - **InfoMessage** structure:
   - string **type** - message type - any of (info | warning)
   - string **message** - message text
