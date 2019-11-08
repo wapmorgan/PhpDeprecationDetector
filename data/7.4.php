@@ -24,12 +24,6 @@ return [
          */
         'allow_url_include',
     ],
-    'functions_usage' => [
-        /**
-         * @see http://php.net/manual/en/migration73.deprecated.php#migration73.deprecated.core.ci-constant
-         */
-        'define' => '@define_case_insensitive',
-    ],
     'identifiers' => [
         'fn',
     ],
