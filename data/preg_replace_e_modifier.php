@@ -17,7 +17,7 @@ function preg_replace_e_modifier(array $usageTokens) {
     }
 
     $string = substr($data[0][1], 1, -1);
-    $delimiter = strtr($string{0}, '({[<', ')}]>');
+    $delimiter = strtr($string[0], '({[<', ')}]>');
 
     if ($data[count($data)-1][0] != T_CONSTANT_ENCAPSED_STRING) {
         return false;
