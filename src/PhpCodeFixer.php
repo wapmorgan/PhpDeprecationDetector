@@ -6,12 +6,12 @@ class PhpCodeFixer {
     /**
      * Version of analyzer
      */
-    const VERSION = '2.0.18';
+    const VERSION = '2.0.22';
 
     /**
      * @var array
      */
-    static public $availableTargets = ['5.3', '5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3'];
+    static public $availableTargets = ['5.3', '5.4', '5.5', '5.6', '7.0', '7.1', '7.2', '7.3', '7.4'];
 
     /**
      * @var array Extensions of file to process.
