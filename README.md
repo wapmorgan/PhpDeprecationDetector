@@ -68,7 +68,7 @@ Arguments:
     files                                    Which files you want to analyze (separate multiple names with a space)?
 
 Options:
-    -t, --target[=TARGET]                    Sets target PHP interpreter version. [default: "7.3"]
+    -t, --target[=TARGET]                    Sets target PHP interpreter version. [default: "7.4"]
     -e, --exclude[=EXCLUDE]                  Sets excluded file or directory names for scanning. If need to pass few names, join it with comma.
     -s, --max-size[=MAX-SIZE]                Sets max size of php file. If file is larger, it will be skipped. [default: "1mb"]
         --file-extensions[=FILE-EXTENSIONS]  Sets file extensions to be parsed. [default: "php, php5, phtml"]
@@ -76,7 +76,7 @@ Options:
         --output-json[=OUTPUT-JSON]          Path to store json-file with analyze results.  If '-' passed, json will be printed on stdout.
 ```
 
-- By providing additional option `--target` you can specify version of PHP to perform less checks. Available target versions: 5.3, 5.4, 5.5, 5.6, 7.0, 7.1, 7.2, 7.3. A larger version includes rules for checking from all previous.
+- By providing additional option `--target` you can specify version of PHP to perform less checks. Available target versions: 5.3, 5.4, 5.5, 5.6, 7.0, 7.1, 7.2, 7.3, 7.4. A larger version includes rules for checking from all previous.
 - By providing `--exclude` option you can exclude specific folders or files from analyze. For example, `--exclude vendor` will prevent checking third-party libraries.
 - By providing `--skip-checks` option you can exclude specific checks from analyze.
 - If your files has unusual extension, you can specify all exts by `--file-extensions` option. By default, it uses `php`, `phtml` and `php5`.
