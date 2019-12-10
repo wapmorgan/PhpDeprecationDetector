@@ -143,6 +143,7 @@ class PhpCodeFixer {
     protected function checkDirInternal($dir, Report $report) {
         if (in_array(strtolower(basename($dir)), $this->excludeList, true)) {
             $report->addInfo(Report::INFO_MESSAGE, 'Folder ' . $dir . ' skipped');
+            return;
         }
 
         foreach (glob($dir.'/*') as $file) {
@@ -154,6 +155,7 @@ class PhpCodeFixer {
             ) {
                 $location_type = (is_dir($file)) ? 'Folder' : 'File';
                 $report->addInfo(Report::INFO_MESSAGE, $location_type . ' ' . $file . ' skipped');
+                continue;
             }
 
             if (is_dir($file)) {
