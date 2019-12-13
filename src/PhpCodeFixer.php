@@ -141,13 +141,27 @@ class PhpCodeFixer {
      * @param Report $report
      */
     protected function checkDirInternal($dir, Report $report) {
+        if (in_array(strtolower(basename($dir)), $this->excludeList, true)) {
+            $report->addInfo(Report::INFO_MESSAGE, 'Folder ' . $dir . ' skipped');
+            return;
+        }
+
         foreach (glob($dir.'/*') as $file) {
+            $path_info = pathinfo($file);
+
+            if (
+                in_array(strtolower($path_info['filename']), $this->excludeList, true)
+                || in_array(strtolower($path_info['basename']), $this->excludeList, true)
+            ) {
+                $location_type = (is_dir($file)) ? 'Folder' : 'File';
+                $report->addInfo(Report::INFO_MESSAGE, $location_type . ' ' . $file . ' skipped');
+                continue;
+            }
+
             if (is_dir($file)) {
-                if (in_array(strtolower(basename($file)), $this->excludeList, true)) {
-                    $report->addInfo(Report::INFO_MESSAGE, 'Folder ' . $file . ' skipped');
-                } else
-                    $this->checkDirInternal($file, $report);
-            } else if (is_file($file) && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), $this->fileExtensions, true)) {
+                $this->checkDirInternal($file, $report);
+            }
+            elseif (is_file($file) && in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), $this->fileExtensions, true)) {
                 $this->checkFile($file, $report);
             }
         }
