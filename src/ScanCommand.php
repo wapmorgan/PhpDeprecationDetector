@@ -108,6 +108,8 @@ class ScanCommand extends Command
             $output->writeln('<error>'.$e->getMessage().'</error>');
             return 1;
         }
+
+        return 0;
     }
 
     /**
