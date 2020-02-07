@@ -15,7 +15,7 @@ function php4_constructors($className, $methodName, array $methodAttributes, arr
         && !in_array('static', $methodAttributes, true)
         && !array_key_exists('__construct', $methods)
         && empty($namespace)) {
-        return 'You should use __constructor() method instead of "'.$methodName.'"';
+        return 'You should use __construct() method instead of "'.$methodName.'"';
     }
 
     return false;
