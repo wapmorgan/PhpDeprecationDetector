@@ -67,6 +67,8 @@ class ScanCommand extends Command
                 new InputDefinition([
                     new InputOption('target', 't', InputOption::VALUE_OPTIONAL,
                         'Sets target PHP interpreter version.', end(PhpCodeFixer::$availableTargets)),
+                    new InputOption('after', 'a', InputOption::VALUE_OPTIONAL,
+                        'Sets initial PHP interpreter version for checks.', PhpCodeFixer::$availableTargets[0]),
                     new InputOption('exclude', 'e', InputOption::VALUE_OPTIONAL,
                         'Sets excluded file or directory names for scanning. If need to pass few names, join it with comma.'),
                     new InputOption('max-size', 's', InputOption::VALUE_OPTIONAL,
@@ -123,6 +125,7 @@ class ScanCommand extends Command
     public function configureAnalyzer(PhpCodeFixer $analyzer, InputInterface $input, OutputInterface $output)
     {
         $this->setTarget($analyzer, $input->getOption('target'), $output);
+        $this->setAfter($analyzer, $input->getOption('after'), $output);
         $this->setMaxSize($analyzer, $input->getOption('max-size'), $output);
         $this->setExcludeList($analyzer, $input->getOption('exclude'), $output);
         $this->setFileExtensions($analyzer, $input->getOption('file-extensions'), $output);
@@ -132,7 +135,7 @@ class ScanCommand extends Command
     }
 
     /**
-     * Checks --target argument
+     * Sets --target argument
      * @param PhpCodeFixer $analyzer
      * @param $value
      * @param OutputInterface $output
@@ -144,8 +147,26 @@ class ScanCommand extends Command
             $analyzer->setTarget($this->target = end(PhpCodeFixer::$availableTargets));
         } else {
             if (!in_array($value, PhpCodeFixer::$availableTargets, true))
-                throw new ConfigurationException('Target version is not valid. Available target version: '.implode(', ', PhpCodeFixer::$availableTargets));
+                throw new ConfigurationException('Target version is not valid. Available target versions: '.implode(', ', PhpCodeFixer::$availableTargets));
             $analyzer->setTarget($this->target = $value);
+        }
+    }
+
+    /**
+     * Sets --after argument
+     * @param PhpCodeFixer $analyzer
+     * @param $value
+     * @param OutputInterface $output
+     * @throws ConfigurationException
+     */
+    public function setAfter(PhpCodeFixer $analyzer, $value, OutputInterface $output)
+    {
+        if (empty($value)) {
+            $analyzer->setAfter($this->after = PhpCodeFixer::$availableTargets[0]);
+        } else {
+            if (!in_array($value, PhpCodeFixer::$availableTargets, true))
+                throw new ConfigurationException('After version is not valid. Available after versions: '.implode(', ', PhpCodeFixer::$availableTargets));
+            $analyzer->setAfter($this->after = $value);
         }
     }
 

@@ -24,6 +24,11 @@ class PhpCodeFixer {
     protected $target;
 
     /**
+     * @var string Initial php version
+     */
+    protected $after;
+
+    /**
      * @var IssuesBank
      */
     protected $issuesBank;
@@ -53,7 +58,8 @@ class PhpCodeFixer {
      */
     public function __construct()
     {
-        $this->target = end(self::$defaultFileExtensions);
+        $this->target = end(self::$availableTargets);
+        $this->after = self::$availableTargets[0];
         $this->fileExtensions = self::$defaultFileExtensions;
     }
 
@@ -63,6 +69,14 @@ class PhpCodeFixer {
     public function setTarget($target)
     {
         $this->target = $target;
+    }
+
+    /**
+     * @param $target
+     */
+    public function setAfter($after)
+    {
+        $this->after = $after;
     }
 
     /**
@@ -105,6 +119,9 @@ class PhpCodeFixer {
         // init issues bank
         $this->issuesBank = new IssuesBank();
         foreach (self::$availableTargets as $version) {
+            if (version_compare($this->after, $version, '>'))
+                continue;
+
             $version_issues = include dirname(dirname(__FILE__)).'/data/'.$version.'.php';
 
             foreach ($version_issues as $issues_type => $issues_list) {
