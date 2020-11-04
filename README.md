@@ -1,6 +1,6 @@
 # PhpCodeFixer
 
-PhpCodeFixer - analyzer of PHP code to search issues with deprecated functionality in newer interpreter versions..
+PhpCodeFixer - analyzer of PHP code to search usages of deprecated functionality in newer interpreter versions - deprecations detector.
 
 [![Latest Stable Version](https://poser.pugx.org/wapmorgan/php-code-fixer/v/stable)](https://packagist.org/packages/wapmorgan/php-code-fixer)
 [![Total Downloads](https://poser.pugx.org/wapmorgan/php-code-fixer/downloads)](https://packagist.org/packages/wapmorgan/php-code-fixer)
