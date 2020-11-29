@@ -1,5 +1,5 @@
 {
-    "name": "wapmorgan/php-code-fixer",
+    "name": "wapmorgan/php-deprecation-detector",
     "description": "Analyzer of PHP code to search issues with deprecated functionality in newer interpreter versions.",
     "type": "package",
     "license": "BSD-3-Clause",
