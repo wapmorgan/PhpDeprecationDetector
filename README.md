@@ -1,12 +1,12 @@
-# PhpCodeFixer
+# PhpDeprecationDetector
 
-PhpCodeFixer - analyzer of PHP code to search usages of deprecated functionality in newer interpreter versions - deprecations detector.
+PhpDeprecationDetector - analyzer of PHP code to search usages of deprecated functionality in newer interpreter versions - deprecations detector.
 
-[![Latest Stable Version](https://poser.pugx.org/wapmorgan/php-code-fixer/v/stable)](https://packagist.org/packages/wapmorgan/php-code-fixer)
-[![Total Downloads](https://poser.pugx.org/wapmorgan/php-code-fixer/downloads)](https://packagist.org/packages/wapmorgan/php-code-fixer)
-[![License](https://poser.pugx.org/wapmorgan/php-code-fixer/license)](https://packagist.org/packages/wapmorgan/php-code-fixer)
+[![Latest Stable Version](https://poser.pugx.org/wapmorgan/php-deprecation-detector/v/stable)](https://packagist.org/packages/wapmorgan/php-deprecation-detector)
+[![Total Downloads](https://poser.pugx.org/wapmorgan/php-deprecation-detector/downloads)](https://packagist.org/packages/wapmorgan/php-deprecation-detector)
+[![License](https://poser.pugx.org/wapmorgan/php-deprecation-detector/license)](https://packagist.org/packages/wapmorgan/php-deprecation-detector)
 
-PhpCodeFixer finds:
+PhpDeprecationDetector finds:
 - Usage of removed objects: functions, variables, constants and ini-directives.
 - Usage of deprecated functions functionality.
 - Usage of forbidden names or tricks (e.g. reserved identifiers in newer versions).
@@ -22,43 +22,43 @@ It literally helps you find code that can fail after migration to newer PHP vers
 
 ## Phar file
 
-1. Just download a phar from [releases page](https://github.com/wapmorgan/PhpCodeFixer/releases) and make executable
+1. Just download a phar from [releases page](https://github.com/wapmorgan/PhpDeprecationDetector/releases) and make executable
   ```sh
-  chmod +x phpcf-x.x.x.phar
+  chmod +x phpdd-x.x.x.phar
   ```
 
 2. a. **Local installation**: use it from current folder:
     ```php
-    ./phpcf-x.x.x.phar -h
+    ./phpdd-x.x.x.phar -h
     ```
 
    b. **Global installation**: move it in to one of folders listed in your `$PATH` and run from any folder:
     ```sh
-    sudo mv phpcf-x.x.x.phar /usr/local/bin/phpcf
-    phpcf -h
+    sudo mv phpdd-x.x.x.phar /usr/local/bin/phpdd
+    phpdd -h
     ```
 
 ## Composer
-Another way to install _phpcf_ is via composer.
+Another way to install _phpdd_ is via composer.
 
 1. Install composer:
   ```sh
   curl -sS https://getcomposer.org/installer | php
   ```
 
-2. Install phpcf in global composer dir:
+2. Install phpdd in global composer dir:
   ```sh
-  ./composer.phar global require wapmorgan/php-code-fixer dev-master
+  ./composer.phar global require wapmorgan/php-deprecation-detector dev-master
   ```
 
 3. Run from any folder:
   ```sh
-  phpcf -h
+  phpdd -h
   ```
 
 # Usage
 ## Console scanner
-To scan your files or folder launch `phpcf` and pass file or directory names.
+To scan your files or folder launch `phpdd` and pass file or directory names.
 
 ```
 Description:
@@ -95,9 +95,9 @@ Options:
 
 ### Example of usage
 ```
-> ./bin/phpcf tests/
+> ./bin/phpdd tests/
 Max file size set to: 1.000 MiB
-Folder /media/wapmorgan/Локальный диск/Документы/PhpCodeFixer/tests
+Folder /media/wapmorgan/Локальный диск/Документы/PhpDeprecationDetector/tests
 - PHP 5.3 (3) - your version is greater or equal
 +------------+---------+---------------------------------------------------------------------+
 | File:Line  | Type    | Issue                                                               |
