@@ -12,6 +12,9 @@
     "suggest": {
         "ext-json": "Adds ability to store report in JSON format"
     },
+    "replace": {
+        "wapmorgan/php-code-fixer": "self.version"
+    },
     "autoload": {
         "psr-4": {
             "wapmorgan\\PhpCodeFixer\\": "src/"
