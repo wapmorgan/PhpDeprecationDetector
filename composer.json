@@ -21,17 +21,17 @@
         },
         "files": ["src/functions.php"]
     },
-    "bin": ["bin/phpcf"],
+    "bin": ["bin/phpdd"],
     "extra": {
         "phar-builder": {
             "compression": "BZip2",
-            "name": "phpcf-dev.phar",
+            "name": "phpdd-dev.phar",
             "output-dir": "./",
-            "entry-point": "bin/phpcf",
+            "entry-point": "bin/phpdd",
             "include": ["bin", "data"],
             "events": {
                 "command.package.start" : "git describe --tags > bin/version.txt",
-                "command.package.end": "cp phpcf-dev.phar phpcf-`cat bin/version.txt`.phar && chmod +x phpcf.phar && rm bin/version.txt"
+                "command.package.end": "cp phpdd-dev.phar phpdd-`cat bin/version.txt`.phar && chmod +x phpdd-`cat bin/version.txt`.phar && rm bin/version.txt"
             }
         }
     },
