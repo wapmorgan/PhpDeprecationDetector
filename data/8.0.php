@@ -34,6 +34,17 @@ return [
         'pg_setclientencoding' => 'pg_set_client_encoding',
         'pg_clientencoding' => 'pg_client_encoding',
 
+        'zip_close' => 'ZipArchive',
+        'zip_entry_close' => 'ZipArchive',
+        'zip_entry_compressedsize' => 'ZipArchive',
+        'zip_entry_compressionmethod' => 'ZipArchive',
+        'zip_entry_filesize' => 'ZipArchive',
+        'zip_entry_name' => 'ZipArchive',
+        'zip_entry_open' => 'ZipArchive',
+        'zip_entry_read' => 'ZipArchive',
+        'zip_open' => 'ZipArchive',
+        'zip_read' => 'ZipArchive',
+
 //        'ReflectionFunction::isDisabled',
 //        'ReflectionParameter::getClass',
 //        'ReflectionParameter::isArray',

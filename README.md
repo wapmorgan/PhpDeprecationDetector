@@ -6,10 +6,10 @@ PhpDeprecationDetector - analyzer of PHP code to search usages of deprecated fun
 [![Total Downloads](https://poser.pugx.org/wapmorgan/php-deprecation-detector/downloads)](https://packagist.org/packages/wapmorgan/php-deprecation-detector)
 [![License](https://poser.pugx.org/wapmorgan/php-deprecation-detector/license)](https://packagist.org/packages/wapmorgan/php-deprecation-detector)
 
-PhpDeprecationDetector finds:
-- Usage of removed objects: functions, variables, constants and ini-directives.
-- Usage of deprecated functions functionality.
-- Usage of forbidden names or tricks (e.g. reserved identifiers in newer versions).
+PhpDeprecationDetector detects:
+- Usage of deprecated **functions, variables, constants and ini-directives**.
+- Usage of deprecated **functions functionality**.
+- Usage of **forbidden names or tricks** (e.g. reserved identifiers in newer versions).
 
 It literally helps you find code that can fail after migration to newer PHP version.
 
