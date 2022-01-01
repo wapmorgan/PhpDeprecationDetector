@@ -71,14 +71,14 @@ Arguments:
   files                                    Which files you want to analyze (separate multiple names with a space)?
 
 Options:
-  -t, --target[=TARGET]                    Sets target PHP interpreter version. [default: "7.4"]
+  -t, --target[=TARGET]                    Sets target PHP interpreter version. [default: "8.0"]
   -a, --after[=AFTER]                      Sets initial PHP interpreter version for checks. [default: "5.3"]
   -e, --exclude[=EXCLUDE]                  Sets excluded file or directory names for scanning. If need to pass few names, join it with comma.
   -s, --max-size[=MAX-SIZE]                Sets max size of php file. If file is larger, it will be skipped. [default: "1mb"]
       --file-extensions[=FILE-EXTENSIONS]  Sets file extensions to be parsed. [default: "php, php5, phtml"]
       --skip-checks[=SKIP-CHECKS]          Skip all checks containing any of the given values. Pass a comma-separated list for multiple values.
       --output-json[=OUTPUT-JSON]          Path to store json-file with analyze results. If '-' passed, json will be printed on stdout.
-  -h, --help                               Display this help message
+  -h, --help                               Display help for the given command. When no command is given display help for the scan command
   -q, --quiet                              Do not output any message
   -V, --version                            Display this application version
       --ansi                               Force ANSI output
@@ -87,7 +87,7 @@ Options:
   -v|vv|vvv, --verbose                     Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
 ```
 
-- By providing additional option `--target` you can specify version of PHP to perform less checks. Available target versions: 5.3, 5.4, 5.5, 5.6, 7.0, 7.1, 7.2, 7.3, 7.4. A larger version includes rules for checking from all previous.
+- By providing additional option `--target` you can specify version of PHP to perform less checks. Available target versions: 5.3, 5.4, 5.5, 5.6, 7.0, 7.1, 7.2, 7.3, 7.4, 8.0. A larger version includes rules for checking from all previous.
 - By providing `--exclude` option you can exclude specific folders or files from analyze. For example, `--exclude vendor` will prevent checking third-party libraries.
 - By providing `--skip-checks` option you can exclude specific checks from analyze.
 - If your files has unusual extension, you can specify all exts by `--file-extensions` option. By default, it uses `php`, `phtml` and `php5`.
