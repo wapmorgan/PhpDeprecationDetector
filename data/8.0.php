@@ -1,8 +1,8 @@
 <?php
 return [
-     /**
-        * @see https://github.com/php/php-src/blob/PHP-8.0/UPGRADING
-        */
+    /**
+     * @see https://github.com/php/php-src/blob/PHP-8.0/UPGRADING
+     */
     'methods_naming' => [
         '@php4_constructors'
     ],
@@ -11,15 +11,17 @@ return [
         '__autoload' =>'spl_autoload_register',
         'create_function' => 'Anonymous functions may be used instead.',
         'each' => 'foreach or ArrayIterator should be used instead.',
+        // @see GD
         'image2wbmp' => 'imagewbmp',
         'png2wbmp',
         'jpeg2wbmp',
-       // @Exif
-       'read_exif_data' => 'exif_read_data',
-       // @GMP
-       'gmp_random' => 'gmp_random_range, or  gmp_random_bits ',
-       // @IMAP
-       'imap_header' => 'imap_headerinfo',
+        'imagedestroy', //no longer has an effect
+        // @Exif
+        'read_exif_data' => 'exif_read_data',
+        // @GMP
+        'gmp_random' => 'gmp_random_range, or  gmp_random_bits ',
+        // @IMAP
+        'imap_header' => 'imap_headerinfo',
         // @see LDAP
         'ldap_set_rebind_proc' => '$callback parameter does not accept empty string anymore; null value shall be used instead.',
         'ldap_sort',
@@ -48,11 +50,11 @@ return [
         'push' => 'SplDoublyLinkedList::push() now returns void instead of true',
         'unshift' => 'SplDoublyLinkedList::unshift() now returns void instead of true',
         //standard
-        'string.strip_tags',
-        'hebrevc',
         'convert_cyr_string',
-        'money_format',
         'ezmlm_hash',
+        'hebrevc',
+        'string.strip_tags',
+        'money_format',
         'restore_include_path' => 'ini_restore(\'include_path\')',
         'get_magic_quotes_gpc' => 'They always return FALSE. ',
         'get_magic_quotes_runtime' => 'They always return FALSE. ',
@@ -61,47 +63,22 @@ return [
         /**
          * @see Deprecated
          */
-        //@see LibXML
-        'libxml_disable_entity_loader',
-        //@see Reflection
-        'isDisabled' => 'getType() or other Reflection API',
-        'getClass' => 'getType() or other Reflection API',
-        'isArray' => 'getType() or other Reflection API',
-        'isCallable' => 'getType() or other Reflection API'
-    ],
-    'constants' => [
-        /**
-         * @see https://github.com/php/php-src/blob/PHP-8.0/UPGRADING
-         */
-        'INTL_IDNA_VARIANT_2003' => 'INTL_IDNA_VARIANT_UTS46',
-        'MB_OVERLOAD_MAIL',
-        'MB_OVERLOAD_STRING',
-        'MB_OVERLOAD_REGEX',
-        'OPSYS_Z_CPM' => 'OPSYS_CPM',
-        'ASSERT_QUIET_EVAL',
-        'PG_VERSION_STR' => 'PG_VERSION',
-        'FILTER_SANITIZE_MAGIC_QUOTES'
-    ],
-    'ini_settings' => [
-        'track_errors ',
-        'pdo_odbc.db2_instance_name'
-    ],
-    'functions_usage' => [
-        'implode' => '@implode_param_order_check'
-    ],
-    'identifiers' => [
-        'match',
-        'mixed',
-        'Stringable'
-    'functions' => [
+        //Enchant
         'enchant_broker_set_dict_path',
         'enchant_broker_get_dict_path',
         'enchant_dict_add_to_personal' => 'enchant_dict_add',
         'enchant_dict_is_in_session' => 'enchant_dict_is_added',
         'enchant_broker_free' => 'unset',
         'enchant_broker_free_dict' => 'unset',
+        //@see LibXML
         'libxml_disable_entity_loader',
+        //@see Reflection
+        'getClass' => 'getType() or other Reflection API',
+        'isDisabled' => 'getType() or other Reflection API',
+        'isArray' => 'getType() or other Reflection API',
+        'isCallable' => 'getType() or other Reflection API',
 
+        //PostgresSQL
         'pg_errormessage' => 'pg_last_error',
         'pg_numrows' => 'pg_num_rows',
         'pg_numfields' => 'pg_num_fields',
@@ -126,7 +103,7 @@ return [
         'pg_loexport' => 'pg_lo_export',
         'pg_setclientencoding' => 'pg_set_client_encoding',
         'pg_clientencoding' => 'pg_client_encoding',
-
+        //Zip
         'zip_close' => 'ZipArchive',
         'zip_entry_close' => 'ZipArchive',
         'zip_entry_compressedsize' => 'ZipArchive',
@@ -136,7 +113,7 @@ return [
         'zip_entry_open' => 'ZipArchive',
         'zip_entry_read' => 'ZipArchive',
         'zip_open' => 'ZipArchive',
-        'zip_read' => 'ZipArchive',
+        'zip_read' => 'ZipArchive'
 
 //        'ReflectionFunction::isDisabled',
 //        'ReflectionParameter::getClass',
@@ -144,11 +121,31 @@ return [
 //        'ReflectionParameter::isCallable',
     ],
     'constants' => [
+        /**
+         * @see https://github.com/php/php-src/blob/PHP-8.0/UPGRADING
+         */
+        'ASSERT_QUIET_EVAL',
         'ENCHANT_MYSPELL',
         'ENCHANT_ISPELL',
+        'FILTER_SANITIZE_MAGIC_QUOTES',
+        'INTL_IDNA_VARIANT_2003' => 'INTL_IDNA_VARIANT_UTS46',
+        'MB_OVERLOAD_MAIL',
+        'MB_OVERLOAD_STRING',
+        'MB_OVERLOAD_REGEX',
+        'OPSYS_Z_CPM' => 'OPSYS_CPM',
         'PGSQL_LIBPQ_VERSION_STR' => 'PGSQL_LIBPQ_VERSION',
     ],
+    'ini_settings' => [
+        'track_errors ',
+        'pdo_odbc.db2_instance_name'
+    ],
     'functions_usage' => [
+        'implode' => '@implode_param_order_check',
 //        '@optional_parameter_before_required',
+    ],
+    'identifiers' => [
+        'match',
+        'mixed',
+        'Stringable'
     ]
 ];
