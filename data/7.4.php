@@ -8,6 +8,9 @@ return [
         'restore_include_path' => 'ini_restore(\'include_path\')',
         'ldap_control_paged_result_response' => 'ldap_search',
         'ldap_control_paged_result' => 'ldap_search',
+        'get_magic_quotes_gpc',
+        'get_magic_quotes_runtime',
+        'hebrevc' => 'nl2br(hebrev())',
     ],
     'constants' => [
         /**

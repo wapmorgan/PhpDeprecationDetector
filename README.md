@@ -1,15 +1,15 @@
-# PhpCodeFixer
+# PhpDeprecationDetector
 
-PhpCodeFixer - analyzer of PHP code to search issues with deprecated functionality in newer interpreter versions..
+PhpDeprecationDetector - analyzer of PHP code to search usages of deprecated functionality in newer interpreter versions - deprecations detector.
 
-[![Latest Stable Version](https://poser.pugx.org/wapmorgan/php-code-fixer/v/stable)](https://packagist.org/packages/wapmorgan/php-code-fixer)
-[![Total Downloads](https://poser.pugx.org/wapmorgan/php-code-fixer/downloads)](https://packagist.org/packages/wapmorgan/php-code-fixer)
-[![License](https://poser.pugx.org/wapmorgan/php-code-fixer/license)](https://packagist.org/packages/wapmorgan/php-code-fixer)
+[![Latest Stable Version](https://poser.pugx.org/wapmorgan/php-deprecation-detector/v/stable)](https://packagist.org/packages/wapmorgan/php-deprecation-detector)
+[![Total Downloads](https://poser.pugx.org/wapmorgan/php-deprecation-detector/downloads)](https://packagist.org/packages/wapmorgan/php-deprecation-detector)
+[![License](https://poser.pugx.org/wapmorgan/php-deprecation-detector/license)](https://packagist.org/packages/wapmorgan/php-deprecation-detector)
 
-PhpCodeFixer finds:
-- Usage of removed objects: functions, variables, constants and ini-directives.
-- Usage of deprecated functions functionality.
-- Usage of forbidden names or tricks (e.g. reserved identifiers in newer versions).
+PhpDeprecationDetector detects:
+- Usage of deprecated **functions, variables, constants and ini-directives**.
+- Usage of deprecated **functions functionality**.
+- Usage of **forbidden names or tricks** (e.g. reserved identifiers in newer versions).
 
 It literally helps you find code that can fail after migration to newer PHP version.
 
@@ -22,43 +22,43 @@ It literally helps you find code that can fail after migration to newer PHP vers
 
 ## Phar file
 
-1. Just download a phar from [releases page](https://github.com/wapmorgan/PhpCodeFixer/releases) and make executable
+1. Just download a phar from [releases page](https://github.com/wapmorgan/PhpDeprecationDetector/releases) and make executable
   ```sh
-  chmod +x phpcf-x.x.x.phar
+  chmod +x phpdd-x.x.x.phar
   ```
 
 2. a. **Local installation**: use it from current folder:
     ```php
-    ./phpcf-x.x.x.phar -h
+    ./phpdd-x.x.x.phar -h
     ```
 
    b. **Global installation**: move it in to one of folders listed in your `$PATH` and run from any folder:
     ```sh
-    sudo mv phpcf-x.x.x.phar /usr/local/bin/phpcf
-    phpcf -h
+    sudo mv phpdd-x.x.x.phar /usr/local/bin/phpdd
+    phpdd -h
     ```
 
 ## Composer
-Another way to install _phpcf_ is via composer.
+Another way to install _phpdd_ is via composer.
 
 1. Install composer:
   ```sh
   curl -sS https://getcomposer.org/installer | php
   ```
 
-2. Install phpcf in global composer dir:
+2. Install phpdd in global composer dir:
   ```sh
-  ./composer.phar global require wapmorgan/php-code-fixer dev-master
+  ./composer.phar global require wapmorgan/php-deprecation-detector dev-master
   ```
 
 3. Run from any folder:
   ```sh
-  phpcf -h
+  phpdd -h
   ```
 
 # Usage
 ## Console scanner
-To scan your files or folder launch `phpcf` and pass file or directory names.
+To scan your files or folder launch `phpdd` and pass file or directory names.
 
 ```
 Description:
@@ -71,14 +71,14 @@ Arguments:
   files                                    Which files you want to analyze (separate multiple names with a space)?
 
 Options:
-  -t, --target[=TARGET]                    Sets target PHP interpreter version. [default: "7.4"]
+  -t, --target[=TARGET]                    Sets target PHP interpreter version. [default: "8.0"]
   -a, --after[=AFTER]                      Sets initial PHP interpreter version for checks. [default: "5.3"]
   -e, --exclude[=EXCLUDE]                  Sets excluded file or directory names for scanning. If need to pass few names, join it with comma.
   -s, --max-size[=MAX-SIZE]                Sets max size of php file. If file is larger, it will be skipped. [default: "1mb"]
       --file-extensions[=FILE-EXTENSIONS]  Sets file extensions to be parsed. [default: "php, php5, phtml"]
       --skip-checks[=SKIP-CHECKS]          Skip all checks containing any of the given values. Pass a comma-separated list for multiple values.
       --output-json[=OUTPUT-JSON]          Path to store json-file with analyze results. If '-' passed, json will be printed on stdout.
-  -h, --help                               Display this help message
+  -h, --help                               Display help for the given command. When no command is given display help for the scan command
   -q, --quiet                              Do not output any message
   -V, --version                            Display this application version
       --ansi                               Force ANSI output
@@ -87,7 +87,7 @@ Options:
   -v|vv|vvv, --verbose                     Increase the verbosity of messages: 1 for normal output, 2 for more verbose output and 3 for debug
 ```
 
-- By providing additional option `--target` you can specify version of PHP to perform less checks. Available target versions: 5.3, 5.4, 5.5, 5.6, 7.0, 7.1, 7.2, 7.3, 7.4. A larger version includes rules for checking from all previous.
+- By providing additional option `--target` you can specify version of PHP to perform less checks. Available target versions: 5.3, 5.4, 5.5, 5.6, 7.0, 7.1, 7.2, 7.3, 7.4, 8.0. A larger version includes rules for checking from all previous.
 - By providing `--exclude` option you can exclude specific folders or files from analyze. For example, `--exclude vendor` will prevent checking third-party libraries.
 - By providing `--skip-checks` option you can exclude specific checks from analyze.
 - If your files has unusual extension, you can specify all exts by `--file-extensions` option. By default, it uses `php`, `phtml` and `php5`.
@@ -95,9 +95,9 @@ Options:
 
 ### Example of usage
 ```
-> ./bin/phpcf tests/
+> ./bin/phpdd tests/
 Max file size set to: 1.000 MiB
-Folder /media/wapmorgan/Локальный диск/Документы/PhpCodeFixer/tests
+Folder /media/wapmorgan/Локальный диск/Документы/PhpDeprecationDetector/tests
 - PHP 5.3 (3) - your version is greater or equal
 +------------+---------+---------------------------------------------------------------------+
 | File:Line  | Type    | Issue                                                               |
