@@ -2,23 +2,21 @@
 namespace wapmorgan\PhpCodeFixer;
 
 /**
- * @test 7.3
+ * @test 7.4, 8.0
  * @param array $usageTokens
- * @return bool|string
+ * @return void|string
  */
 function implode_param_order_check(array $usageTokens)
 {
     $tree = PhpCodeFixer::makeFunctionCallTree($usageTokens);
     $data = PhpCodeFixer::divideByComma($tree[0]);
-    $data = PhpCodeFixer::trimSpaces($data[0]);
-
-    if (!isset($tree[0][1])) {
-        return;
-    } //implode() one param;
-
-    if ($data[0][0] != T_CONSTANT_ENCAPSED_STRING) {
+    if(count($data) === 0){ //implode() one param;
         return;
     }
 
-    return 'if use implode ( string $glue , array $pieces ) instead of implode(array $parts, string $glue). ';
+    $trimmedData = PhpCodeFixer::trimSpaces($data[0][0]);
+    $firstParameter = $trimmedData[1];
+    if(strpos($firstParameter, '$') !== false){
+        return 'Passing the separator after the array is no longer supported. You should use implode(string $glue , array $pieces)';
+    }
 }
