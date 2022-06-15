@@ -6,7 +6,7 @@ class PhpCodeFixer {
     /**
      * Version of analyzer
      */
-    const VERSION = '2.0.23';
+    const VERSION = '2.0.28';
 
     /**
      * @var array
