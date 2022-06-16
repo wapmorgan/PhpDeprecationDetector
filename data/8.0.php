@@ -140,7 +140,7 @@ return [
         'pdo_odbc.db2_instance_name'
     ],
     'functions_usage' => [
-        'implode' => '@implode_param_order_check',
+//        'implode' => '@implode_param_order_check',
 //        '@optional_parameter_before_required',
     ],
     'identifiers' => [
