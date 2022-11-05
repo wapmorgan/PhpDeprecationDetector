@@ -434,7 +434,7 @@ class ScanCommand extends Command
      * @param string $unit Sets default unit. Can have these values: B, KB, MG, GB, TB, PB, EB, ZB and YB
      * @return string
      */
-    public function formatSize($format, $bytes, $unit = null) {
+    public function formatSize($format, $bytes, $unit = '') {
         $units = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
         $bytes = max($bytes, 0);
         $unit = strtoupper($unit);
@@ -446,7 +446,7 @@ class ScanCommand extends Command
         else
             $multiplier = 1000;
 
-        if ($unit === null || !in_array($unit, $units)) {
+        if ($unit === '' || !in_array($unit, $units)) {
             $pow = floor(($bytes ? log($bytes) : 0) / log($multiplier));
             $pow = min($pow, count($units) - 1);
 
