@@ -40,13 +40,14 @@ class Report {
      * @param string|null $replacement Possible replacement
      * @param string $file File in which issue present
      * @param integer $line Line of file
+     * @param integer $column Column of file
      * @return void
      */
-    public function addIssue($version, $category, $type, $text, $replacement, $file, $line) {
+    public function addIssue($version, $category, $type, $text, $replacement, $file, $line, $column) {
         if ($this->removablePath !== null && strncasecmp($file, $this->removablePath, strlen($this->removablePath)) === 0)
             $file = substr($file, strlen($this->removablePath));
 //        $this->records[$version][] = [$type, $text, $replacement, $file, $line];
-        $issue = new ReportIssue($version, $category, $type, $text, $file, $line);
+        $issue = new ReportIssue($version, $category, $type, $text, realpath($this->removablePath.$file), $file, $line, $column);
         if (!empty($replacement))
             $issue->setReplacement($replacement);
         $this->records[$version][] = $issue;
