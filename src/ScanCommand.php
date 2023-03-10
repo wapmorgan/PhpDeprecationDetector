@@ -3,12 +3,12 @@ namespace wapmorgan\PhpCodeFixer;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
+use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Helper\Table;
 
 class ScanCommand extends Command
 {
@@ -16,6 +16,7 @@ class ScanCommand extends Command
 
     const STDOUT = 1;
     const JSON = 2;
+    const JUNIT = 3;
 
     /**
      * @var PhpCodeFixer
@@ -49,7 +50,7 @@ class ScanCommand extends Command
     /**
      * @var string
      */
-    protected $jsonOutputPath;
+    protected $outputFile = null;
 
     /**
      * @var int
@@ -79,8 +80,10 @@ class ScanCommand extends Command
                         implode(', ', PhpCodeFixer::$defaultFileExtensions)),
                     new InputOption('skip-checks', null, InputOption::VALUE_OPTIONAL,
                         'Skip all checks containing any of the given values. Pass a comma-separated list for multiple values.'),
-                    new InputOption('output-json', null, InputOption::VALUE_OPTIONAL,
-                        'Path to store json-file with analyze results. If \'-\' passed, json will be printed on stdout.'),
+                    new InputOption('output', null, InputOption::VALUE_OPTIONAL,
+                        'The output type required. Options: stdout, json, junit. Defaults to stdout.'),
+                    new InputOption('output-file', null, InputOption::VALUE_OPTIONAL,
+                        'File path to store results where output is not stdout.'),
                     new InputArgument('files', InputArgument::IS_ARRAY | InputArgument::REQUIRED,
                         'Which files you want to analyze (separate multiple names with a space)?'),
                 ])
@@ -96,9 +99,29 @@ class ScanCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         try {
-            $this->jsonOutputPath = $input->getOption('output-json');
-            if (!empty($this->jsonOutputPath))
-                $this->outputMode = self::JSON;
+            if(!empty($input->getOption('output'))){
+                switch($input->getOption('output')){
+                    case 'json':
+                        $this->outputMode = self::JSON;
+                        break;
+                    case 'junit':
+                        $this->outputMode = self::JUNIT;
+                        break;
+                    case 'stdout':
+                        $this->outputMode = self::STDOUT;
+                        break;
+                    default:
+                        throw new ConfigurationException('Output is not valid. Available outputs: stdout, json, junit');
+                        break;
+                }
+            }
+
+            if(!empty($input->getOption('output-file'))){
+                if(!in_array($this->outputMode, [self::JSON, self::JUNIT])){
+                    throw new ConfigurationException('An output file can only be provided for: json, junit');
+                }
+                $this->outputFile = trim($input->getOption('output-file'));
+            }
 
             $this->analyzer = $this->configureAnalyzer(new PhpCodeFixer(), $input, $output);
             $this->analyzer->initializeIssuesBank();
@@ -301,7 +324,7 @@ class ScanCommand extends Command
                 if (!empty($report)) {
 					$table = new Table($output);
 					$table
-						->setHeaders([/*'PHP',*/ 'File:Line', 'Type', 'Issue']);
+						->setHeaders([/*'PHP',*/ 'File (Line:Column)', 'Type', 'Issue']);
                     $versions = array_keys($report_issues);
                     sort($versions);
 
@@ -362,7 +385,7 @@ class ScanCommand extends Command
                             );
 
 							$rows[] = [
-								'<comment>'.$issue->file.'</comment>:'.$issue->line,
+								'<comment>'.$issue->file.'</comment> ('.$issue->line.':'.$issue->column.')',
 								$issue->category,
                                 $issue_text,
 							];
@@ -511,6 +534,7 @@ class ScanCommand extends Command
                                 'file' => $issue->file,
                                 'path' => $report->getRemovablePath().$issue->file,
                                 'line' => $issue->line,
+                                'column' => $issue->column,
                                 'category' => $issue->category,
                                 'type' => $issue->type,
                                 'checker' => $issue->text,
@@ -541,10 +565,131 @@ class ScanCommand extends Command
             return count($value) > 0;
         }), JSON_PRETTY_PRINT);
 
-        if ($jsonFile === '-')
+        if (in_array($jsonFile, ['', null]))
             fwrite(STDOUT, $json);
         else
             file_put_contents($jsonFile, $json);
+
+        return $total_issues;
+    }
+
+    /**
+     * @param $junitFile
+     * @return int
+     */
+    protected function outputToJunit($junitFile)
+    {
+
+        $total_issues = 0;
+        $total_tests = 0;
+        $data = [];
+        $filesWithFailures = [];
+        if (!empty($this->reports)) {
+            foreach ($this->reports as $report) {
+                $report_issues = $report->getIssues();
+                if (!empty($report)) {
+                    $versions = array_keys($report_issues);
+                    sort($versions);
+
+                    // print issues by version
+                    foreach ($versions as $version) {
+                        // iterate issues
+                        foreach ($report_issues[$version] as $issue) {
+                            $key = $issue->file.'_'.$version;
+                            if(!array_key_exists($key, $data)){
+                                $data[$key] = [
+                                    'name' => $issue->path . ' (PHP ' . $version . ')',
+                                    'failures' => [],
+                                ];
+                            }
+                            $data[$key]['failures'][] = $issue;
+                            $total_issues++;
+                            $total_tests++;
+                            $filesWithFailures[] = $issue->path;
+                        }
+                    }
+                }
+            }
+        }
+
+        foreach(array_diff($this->analyzer->scannedFiles, $filesWithFailures) as $path){
+            $data[] = [
+                'name' => $path,
+                'failures' => [],
+            ];
+        }
+
+        // add files that passed as a test
+        $total_tests += count(array_diff($this->analyzer->scannedFiles, $filesWithFailures));
+
+        ob_start();
+        echo '<?xml version="1.0" encoding="UTF-8"?>'.PHP_EOL;
+        echo '<testsuites name="PhpDeprecationDetector '.PhpCodeFixer::VERSION.'" errors="0" tests="'.$total_tests.'" failures="'.$total_issues.'">'.PHP_EOL;
+
+        foreach($data as $test){
+            $out = new \XMLWriter;
+            $out->openMemory();
+            $out->setIndent(true);
+
+            $out->startElement('testsuite');
+            $out->writeAttribute('name', $test['name']);
+            $out->writeAttribute('errors', 0);
+
+            if (count($test['failures']) === 0) {
+                $out->writeAttribute('tests', 1);
+                $out->writeAttribute('failures', 0);
+
+                $out->startElement('testcase');
+                $out->writeAttribute('name', $test['name']);
+                $out->endElement();
+            } else {
+
+                $out->writeAttribute('tests', count($test['failures']));
+                $out->writeAttribute('failures', count($test['failures']));
+                
+                if(count($test['failures']) > 0){
+                    // sort by line+column
+                    usort($test['failures'], function($a, $b){
+                        $diff = $a->line - $b->line;
+                        return ($diff !== 0) ? $diff : $a->column - $b->column;
+                    });
+
+                    foreach($test['failures'] as $failure){
+                        $out->startElement('testcase');
+                        $out->writeAttribute('name', $failure->text.' at '.$failure->path." ($failure->line:$failure->column)");
+                        
+                        $out->startElement('failure');
+                        
+                        if (!empty($failure->replacement)) {
+                            if ($failure->category === ReportIssue::CHANGED) {
+                                $out->writeAttribute('type', $failure->type);
+                                $out->writeAttribute('message', 'Problem: ' . $failure->text . '; Note: ' . $failure->replacement);
+                            } else {
+                                $out->writeAttribute('type', $failure->type);
+                                $out->writeAttribute('message', 'Problem: ' . $failure->text.($failure->type === 'function' ? '()' : '') . '; Replacement: ' . $failure->replacement.($failure->type === 'function' ? '()' : ''));
+                            }
+                        } else {
+                            $out->writeAttribute('type', $failure->type);
+                            $out->writeAttribute('message', $failure->category);
+                        }
+
+                        $out->endElement();
+
+                        $out->endElement();
+                    }
+                }
+            }
+            $out->endElement();
+            echo $out->flush();
+        }
+
+        echo '</testsuites>'.PHP_EOL;
+        $junit = ob_get_clean();
+
+        if (in_array($junitFile, ['', null]))
+            fwrite(STDOUT, $junit);
+        else
+            file_put_contents($junitFile, $junit);
 
         return $total_issues;
     }
@@ -561,7 +706,18 @@ class ScanCommand extends Command
                 break;
 
             case self::JSON:
-                $total_issues = $this->outputToJson($this->jsonOutputPath);
+                $total_issues = $this->outputToJson($this->outputFile);
+                if ($this->isVerbose()) {
+                    if ($total_issues > 0)
+                        $output->writeln('<bg=red;fg=white>Total problems: ' . $total_issues . '</>');
+                    else
+                        $output->writeln('<bg=green;fg=white>Analyzer has not detected any problems in your code.</>');
+                    $this->printMemoryUsage($output);
+                }
+                break;
+
+            case self::JUNIT:
+                $total_issues = $this->outputToJunit($this->outputFile);
                 if ($this->isVerbose()) {
                     if ($total_issues > 0)
                         $output->writeln('<bg=red;fg=white>Total problems: ' . $total_issues . '</>');
@@ -580,6 +736,6 @@ class ScanCommand extends Command
      */
     protected function isVerbose()
     {
-        return $this->outputMode !== self::JSON || $this->jsonOutputPath !== '-';
+        return $this->outputMode == self::STDOUT;
     }
 }

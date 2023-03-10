@@ -77,7 +77,8 @@ Options:
   -s, --max-size[=MAX-SIZE]                Sets max size of php file. If file is larger, it will be skipped. [default: "1mb"]
       --file-extensions[=FILE-EXTENSIONS]  Sets file extensions to be parsed. [default: "php, php5, phtml"]
       --skip-checks[=SKIP-CHECKS]          Skip all checks containing any of the given values. Pass a comma-separated list for multiple values.
-      --output-json[=OUTPUT-JSON]          Path to store json-file with analyze results. If '-' passed, json will be printed on stdout.
+      --output[=OUTPUT]                    The output type required. Options: stdout, json, junit. Defaults to stdout.
+      --output-file[=OUTPUT-FILE]          File path to store results where output is not stdout.
   -h, --help                               Display help for the given command. When no command is given display help for the scan command
   -q, --quiet                              Do not output any message
   -V, --version                            Display this application version
@@ -91,7 +92,7 @@ Options:
 - By providing `--exclude` option you can exclude specific folders or files from analyze. For example, `--exclude vendor` will prevent checking third-party libraries.
 - By providing `--skip-checks` option you can exclude specific checks from analyze.
 - If your files has unusual extension, you can specify all exts by `--file-extensions` option. By default, it uses `php`, `phtml` and `php5`.
-- If you need to generate machine-readable analyze result, use `--output-json` option to specify path to store json or `--output-json=-` to print json to stdout.
+- If you need to generate machine-readable analyze result, use the `--output-file` option to specify path to store the output file as specified on `--output` (json or junit).
 
 ### Example of usage
 ```
@@ -122,7 +123,10 @@ Folder /media/wapmorgan/Локальный диск/Документы/PhpDeprec
 ```
 
 ## Json report format
-Also, you can store analyze result in json format for automatic check. Pass `--output-json=FILENAME` to write result to **FILENAME** file or `--output-json=-` to output to *stdout*.
+Also, you can store analyze result in json format for automatic check. Pass `--output-file=FILENAME` to write result to **FILENAME** file or do not set to output to *stdout*.
+
+## Junit report format
+Also, you can store analyze result in junit format for automatic check. Pass `--output-file=FILENAME` to write result to **FILENAME** file or do not set to output to *stdout*.
 
 **Format of json** - dictionary with items:
 - InfoMessage[] **info_messages** - list of information messages about analyzing process.
@@ -139,6 +143,7 @@ Items description:
   - string **file** - relative path to file in which issue found (*like src/ProblemClass.php*)
   - string **path** - absolute path to file in which issue found (*like /var/www/html/project/src/ProblemClass.php*)
   - int **line** - line in file in which issue found
+  - int **column** - column in line in which issue found
   - string **category** - issue category - any of (changed | removed | violation)
   - string **type** - concrete issue type (*like "constant" or "identifier"*)
   - string **checker** - concrete issue object which may cause problem (*like `magic_quotes_runtime` or `preg_replace() (@preg_replace_e_modifier)`*)
