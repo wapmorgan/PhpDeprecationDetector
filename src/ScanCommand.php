@@ -303,7 +303,7 @@ class ScanCommand extends Command
             $replace_suggestions = $notes = [];
 
             foreach ($this->reports as $report) {
-                $output->writeln(null);
+                $output->writeln('');
                 $output->writeln('<fg=white>'.$report->getTitle().'</>');
 
                 $info_messages = $report->getInfo();
