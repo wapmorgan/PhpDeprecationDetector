@@ -400,7 +400,7 @@ class ScanCommand extends Command
                 }
             }
 
-            $output->writeln(null);
+            $output->writeln('');
 
             if ($total_issues > 0)
                 $output->writeln('<bg=red;fg=white>Total issues: '.$total_issues.'</>');
