@@ -26,6 +26,9 @@ class ScanCommand extends Command
     /** @var string */
     protected $target;
 
+    /** @var string Initial php version */
+    protected $after;
+	
     /** @var array */
     protected $excludeList = [];
 
