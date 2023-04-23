@@ -15,7 +15,6 @@ return [
         'image2wbmp' => 'imagewbmp',
         'png2wbmp',
         'jpeg2wbmp',
-        'imagedestroy', //no longer has an effect
         // @Exif
         'read_exif_data' => 'exif_read_data',
         // @GMP
