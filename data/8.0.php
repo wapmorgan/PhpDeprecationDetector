@@ -146,5 +146,8 @@ return [
         'match',
         'mixed',
         'Stringable'
-    ]
+    ],
+    'variables' => [
+        '@curly_braces_rem'
+    ],
 ];
