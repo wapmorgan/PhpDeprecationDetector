@@ -25,3 +25,9 @@ $p1 = new Point(4, 5);
 // Passing the separator after the array is no longer supported.
 $testArray = [1,2,3,4];
 $result = implode($testArray, "|");
+
+/*
+ *  @See https://www.php.net/manual/en/migration80.deprecated.php#migration80.deprecated.core
+ */
+// Deprecated: Optional parameter declared before required parameter.
+function test($a = [], $b) {}
