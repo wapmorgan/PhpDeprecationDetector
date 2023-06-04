@@ -494,7 +494,7 @@ class PhpCodeFixer {
                 }
             }else{
                 if ($dec_var === true) {
-                    if ($token === '{') { // Curly Barce Access.
+                    if ($token === '{') { // Curly Brace Access.
                         $dvar = $deprecated_varibales['@curly_braces_dep'];
                         $rvar = $deprecated_varibales['@curly_braces_rem'];
                         $tmp = array( $report_vr );
