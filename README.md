@@ -155,3 +155,14 @@ Items description:
   - string **type** - type of note (*like function_usage or deprecated_feature*)
   - string **problem** - note object (*like `preg_replace() (@preg_replace_e_modifier)` or `parse_str() (@parse_str_without_argument)`*)
   - string **note** - note text (*like `Usage of "e" modifier in preg_replace is deprecated: "asdasdsd~ie"` or `Call to parse_str() without second argument is deprecated`*)
+
+# Build
+
+```shell
+docker run --rm --interactive --tty --volume $PWD:/app composer:2.2.4 sh
+# and inside a container:
+docker-php-ext-install bcmath
+composer require macfja/phar-builder
+echo phar.readonly=0 >> /usr/local/etc/php/php-cli.ini
+composer run-script build
+```

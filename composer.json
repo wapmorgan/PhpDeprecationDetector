@@ -10,7 +10,8 @@
         "symfony/console": "^3.4|^4.0|^5.0|^6.0"
     },
     "suggest": {
-        "ext-json": "Adds ability to store report in JSON format"
+        "ext-json": "Adds ability to store report in JSON format",
+        "macfja/phar-builder": "To build phar"
     },
     "replace": {
         "wapmorgan/php-code-fixer": "self.version"
