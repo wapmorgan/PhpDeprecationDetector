@@ -498,6 +498,13 @@ class PhpCodeFixer {
         $function_declaration = false;
         $object_function_call = false;
 
+        $func_dec_var = false; // State Declaring Var.
+        $func_opt_set = false; // State Opt Var Set.
+        $func_req_set = false; // State Req Var Set.
+        $report_fn = ''; // Report Data function.
+        $report_ln = ''; // Report Data Line.
+        $report_cn = ''; // Report Data Column.
+
         foreach ($tokens as $i => $token) {
             if ($token[0] == T_FUNCTION) {
                 $function_declaration = true;
@@ -506,6 +513,123 @@ class PhpCodeFixer {
             if ($function_declaration === true) {
                 if ($token === '{') {
                     $function_declaration = false;
+                    $func_dec_var = false;
+                    $func_opt_set = false;
+                    $func_req_set = false;
+                    $report_fn = '';
+                    $report_ln = '';
+                    $report_cn = '';
+                    continue;
+                }else{ // Solve Issue #71
+                    if (is_array($token)) {
+                        if (
+                            $report_fn == '' && $token[0] == T_STRING
+                        ) { // Store Function Name
+                            $report_fn = $token[1];
+
+                            // Used code from below with minor changes to
+                            // process function declaration closures.
+                            // There may be a better way?
+                            // get func arguments
+                            $functionTokens = [$token];
+                            $k = $i + 2;
+                            $braces = 1;
+                            while ($braces > 0 && isset($tokens[$k])) {
+                                if (
+                                    count($functionTokens) > 1
+                                    || (
+                                        $tokens[$k] !== ')'
+                                        && $tokens[$k] !== '{'
+                                    )
+                                ) {
+                                    if ($tokens[$k][0] !== T_WHITESPACE)
+                                        $functionTokens[] = $tokens[$k];
+                                }
+                                if ($tokens[$k] === ')') {/*var_dump($tokens[$k]);*/
+                                    $braces--;
+                                } elseif ($tokens[$k] === '(') {/*var_dump($tokens[$k]);*/
+                                    $braces++;
+                                } elseif ($tokens[$k] === '{') {/*var_dump($tokens[$k]);*/
+                                    break;
+                                }
+                                // var_dump($braces);
+                                $k++;
+                            }
+                            //$function[] = $tokens[$k];
+
+                            continue;
+                        }
+                        if ($token[0] == T_WHITESPACE) { // Skip White Space.
+                            continue;
+                        }
+                        if ($token[0] == T_VARIABLE) {
+                            $func_dec_var = true; // Declaring Var On.
+                            $func_req_set = true;
+                            // Assume declare of required var.
+                            if ( $report_ln === '' && $report_cn === '' ){
+                                // Store var location for report if needed.
+                                $report_ln = $token[2];
+                                $report_cn = $token[3];
+                            }
+                        }
+                    }else{
+                        if ($token === '(') { // Skip Opening (
+                            continue;
+                        }
+                        if ($func_dec_var === true) {
+                            if ($token === '=') { // Opt Var def in progress.
+                                $func_opt_set = true; // Opt Var Set.
+                                $func_req_set = false; // Req Var Unset.
+                            }
+                        }
+                        if (
+                            $token === ',' || $token === ')'
+                        ) { // Var declaration closure.
+                            $func_dec_var = false; // Declaring Var Off.
+                            if (
+                                $func_opt_set === true
+                                && $func_req_set === true
+                            ) {
+                                // Defining optional before required.
+
+                                // Used issue reporting code from below with
+                                // minor changes to tie into the current
+                                // function being declared.
+                                // There may be a better way?
+                                $result = self::callFunctionUsageChecker(
+                                    ltrim(
+                                        $deprecated_functions_usage
+                                            ['function'][0],
+                                        '@'
+                                    ),
+                                    $report_fn,
+                                    $functionTokens
+                                );
+                                if ($result) {
+                                    $report->addIssue(
+                                        $deprecated_functions_usage
+                                            ['function'][1],
+                                        ReportIssue::CHANGED,
+                                        ReportIssue::DEPRECATED_FUNCTION_USAGE,
+                                        $report_fn . '() ('
+                                        . $deprecated_functions_usage
+                                            ['function'][0] . ')',
+                                        is_string($result) ? $result : null,
+                                        $currentFile,
+                                        $report_ln,
+                                        $report_cn
+                                    );
+                                }
+
+                            }
+                            if ( $func_opt_set === false ){
+                                // Clear var location data.
+                                $report_ln = '';
+                                $report_cn = '';
+                            }
+                            continue;
+                        }
+                    }
                 }
                 continue;
             }
