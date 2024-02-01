@@ -30,4 +30,7 @@ return [
     'identifiers' => [
         'fn',
     ],
+    'variables' => [
+        '@curly_braces_dep',
+    ],
 ];

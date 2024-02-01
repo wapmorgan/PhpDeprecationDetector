@@ -474,6 +474,74 @@ class PhpCodeFixer {
                     $used_variable[1], ($variable[0] != $used_variable[1] ? $variable[0] : null), $currentFile, $used_variable[2], $used_variable[3]);
             }
         }
+        // Solve Issue #59
+        $dec_var = false; // State Evaluating Var. Token.
+        $report_vr = ''; // Report Data Var.
+        $report_ln = ''; // Report Data Line.
+        $report_cn = ''; // Report Data Column.
+        foreach ($tokens as $i => $token) {
+            if (is_array($token)) {
+                if ($token[0] == T_VARIABLE) {
+                    if ( is_string($token[1]) ) { // Store Var Name
+                        $report_vr = $token[1];
+                    }
+                    $dec_var = true; // Evaluating Var On.
+                    if ( $report_ln === '' && $report_cn === '' ){
+                        // Store var location for report if needed.
+                        $report_ln = $token[2];
+                        $report_cn = $token[3];
+                    }
+                }
+            }else{
+                if ($dec_var === true) {
+                    if ($token === '{') { // Curly Brace Access.
+                        $dvar = $deprecated_varibales['@curly_braces_dep'];
+                        $rvar = $deprecated_varibales['@curly_braces_rem'];
+                        $tmp = array( $report_vr );
+                        // File Deprecation Report. PHP 7.4
+                        $result = self::callFunctionUsageChecker(
+                            ltrim( $dvar[0], '@' ),
+                            $report_vr,
+                            $tmp
+                        );
+                        if ($result) {
+                            $report->addIssue(
+                                $dvar[1],
+                                ReportIssue::CHANGED,
+                                ReportIssue::REMOVED_VARIABLE,
+                                'Usage: ' . $report_vr . '{}',
+                                is_string($result) ? $result : null,
+                                $currentFile,
+                                $report_ln,
+                                $report_cn
+                            );
+                        }
+                        // File Removal Report. PHP 8.0
+                        if ($result) {
+                            $result = self::callFunctionUsageChecker(
+                                ltrim( $rvar[0], '@' ),
+                                $report_vr,
+                                $tmp
+                            );
+                            $report->addIssue(
+                                $rvar[1],
+                                ReportIssue::REMOVED,
+                                ReportIssue::REMOVED_VARIABLE,
+                                'Usage: ' . $report_vr . '{}',
+                                is_string($result) ? $result : null,
+                                $currentFile,
+                                $report_ln,
+                                $report_cn
+                            );
+                        }
+                    }else{
+                        $dec_var = false; // Evaluating Var Off.
+                        $report_ln = ''; // Clear var location data.
+                        $report_cn = '';
+                    }
+                }
+            }
+        }
     }
 
     /**

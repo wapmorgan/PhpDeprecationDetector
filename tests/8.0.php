@@ -25,3 +25,10 @@ $p1 = new Point(4, 5);
 // Passing the separator after the array is no longer supported.
 $testArray = [1,2,3,4];
 $result = implode($testArray, "|");
+
+/*
+ *  @See https://www.php.net/manual/en/migration80.incompatible.php
+ */
+// Removed: Support for deprecated curly braces for offset access has been
+// removed.
+$var{$idx};
