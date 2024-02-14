@@ -39,16 +39,11 @@ It literally helps you find code that can fail after migration to newer PHP vers
     ```
 
 ## Composer
-Another way to install _phpdd_ is via composer.
+Another way to install _phpdd_ is via Composer:
 
-1. Install composer:
+1. Install phpdd globally:
   ```sh
-  curl -sS https://getcomposer.org/installer | php
-  ```
-
-2. Install phpdd in global composer dir:
-  ```sh
-  ./composer.phar global require wapmorgan/php-deprecation-detector dev-master
+  composer global require wapmorgan/php-deprecation-detector
   ```
 
 3. Run from any folder:
